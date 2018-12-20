@@ -1,0 +1,64 @@
+.o-icon-multiselect-main {
+  padding: .4em;
+  height: 1.1em;
+  width: 1.1em;
+}
+.o-icon-multiselect-click {
+  padding-right: .5em;
+  height: .9em;
+  width: .9em;
+}
+.o-icon-multiselect-box {
+  padding-right: .4em;
+  height: 1.1em;
+  width: 1.1em;
+}
+.o-icon-multiselect-circle {
+  padding-right: .4em;
+  height: 1.1em;
+  width: 1.1em;
+}
+.o-icon-multiselect-buffer {
+  padding-right: .4em;
+  height: 1.1em;
+  width: 1.1em;
+}
+
+.o-multiselect-button-true .o-icon-multiselect-main,
+.o-multiselect-button-true .o-icon-multiselect-click,
+.o-multiselect-button-true .o-icon-multiselect-box,
+.o-multiselect-button-true .o-icon-multiselect-circle,
+.o-multiselect-button-true .o-icon-multiselect-buffer {
+  fill: $o-btn-active-color;
+}
+
+#bufferradiusBtn {
+  display: block;
+  padding: 0.5em 2em;
+  border-radius: 6px;
+  margin-top: 0.5em;
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #e6e6e6;
+}
+
+#bufferradius {
+  height: 2em;
+  display: block;
+  margin: auto;
+}
+
+.featureSelectorItem {
+  padding: 5px;
+  border-radius: 4px;
+}
+
+
+.featureSelectorItem:hover {
+  background-color: #e6e6e6;
+  cursor: pointer;
+}
+
+.unvalidValue {
+  border: 1px solid red;
+}
