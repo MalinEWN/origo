@@ -14,7 +14,7 @@ import replacer from '../src/utils/replacer';
 const style = Style();
 const styleTypes = StyleTypes();
 
-let selectionLayer;
+export let selectionLayer;
 let savedPin;
 let clickEvent;
 let options;

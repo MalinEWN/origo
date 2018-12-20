@@ -15,6 +15,7 @@ import maputils from './maputils';
 import getattributes from './getattributes';
 import style from './style';
 import layerCreator from './layercreator';
+import selectionmanager from './selectionmanager';
 
 let map;
 const settings = {
@@ -461,6 +462,7 @@ function init(el, mapOptions) {
     });
   }
   featureinfo.init(settings.featureinfoOptions);
+  selectionmanager.init(settings.featureinfoOptions)
 }
 
 export default {

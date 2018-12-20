@@ -265,7 +265,7 @@ function createFeatureSelectionModal(features) {
     });
     modal.showModal();
     $('.featureSelectorItem').on('click', (e) => {
-      bufferFeature = features.find(f => f.getId() === e.target.id).clone();
+      bufferFeature = features.find(f => f.getId().toString() === e.target.id).clone();
       console.log(bufferFeature);
       modal.closeModal();
       resolve();

@@ -9,7 +9,9 @@ function init(options) {
     isOverlay = Object.prototype.hasOwnProperty.call(options, 'overlay') ? options.overlay : true;
     console.log(isOverlay);
    if (isOverlay) {
-       
+       infowindow_overlay.init();
+   } else {
+       infowindow_sidebar.init();
    }
 }
 
