@@ -1,8 +1,19 @@
-export class SelectedFeature {
+import { getUid } from "ol";
+
+export default class SelectedItem {
     constructor(feature, layer, content) {
+        
         this.feature = feature;
         this.layer = layer;
         this.content = content;
+    }
+
+    getId() {
+        let id = this.feature.getId().toString();
+        if (!id) {
+            id = getUid(this.feature);
+        }
+        return id;
     }
 
     getFeature() {

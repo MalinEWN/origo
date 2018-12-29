@@ -4,6 +4,7 @@ import viewer from './viewer';
 import maputils from './maputils';
 import getAttributes from './getattributes';
 import featureInfo from './featureinfo';
+import SelectedItem from './models/SelectedItem';
 
 let map;
 
@@ -171,12 +172,14 @@ function getFeaturesFromRemote(evt) {
     const layer = viewer.getLayer(request.layer);
     if (features) {
       features.forEach((feature) => {
-        requestResult.push({
+        requestResult.push(
+          new SelectedItem(feature)
+          /* {
           title: layer.get('title'),
           feature,
           content: getAttributes(feature, layer),
           layer: layer.get('name')
-        });
+        } */);
       });
       return requestResult;
     }
@@ -209,30 +212,42 @@ function getFeaturesAtPixel(evt, clusterFeatureinfoLevel) {
           return true;
         }
         collection.forEach((f) => {
-          const item = {};
+
+          const si = new SelectedItem(f);
+          result.push(si);
+
+          /* const item = {};
           item.title = l.get('title');
           item.feature = f;
           item.content = getAttributes(f, l);
           item.name = l.get('name');
-          result.push(item);
+          result.push(item); */
         });
       } else if (collection.length === 1 && queryable) {
-        const item = {};
+
+        const si = new SelectedItem(collection[0]);
+        result.push(si);
+
+        /* const item = {};
         item.title = l.get('title');
         item.feature = collection[0];
         item.content = getAttributes(collection[0], l);
         item.name = l.get('name');
         item.layer = l;
-        result.push(item);
+        result.push(item); */
       }
     } else if (queryable) {
-      const item = {};
+
+      const si = new SelectedItem(feature);
+      result.push(si);
+      
+      /* const item = {};
       item.title = l.get('title');
       item.feature = feature;
       item.content = getAttributes(feature, l);
       item.name = l.get('name');
       item.layer = l;
-      result.push(item);
+      result.push(item); */
     }
 
     return false;

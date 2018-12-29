@@ -18,6 +18,8 @@ import buffer from '@turf/buffer';
 import modal from '../modal';
 import { selectionLayer } from '../featureinfo';
 import GeometryType from 'ol/geom/GeometryType';
+import selectionManager from '../selectionmanager';
+import SelectedItem from '../models/SelectedItem'
 
 // import Style from '../style';
 // import StyleTypes from '../style/styletypes';
@@ -119,12 +121,7 @@ function fetchFeature_Click(evt) {
   //const point = evt.feature.getGeometry().getCoordinates();
   if (evt.type === 'singleclick') {
 
-    // if (evt.originalEvent.ctrlKey) {
-    // deselect
-
-    // } else {
-
-    // calculating tolerance based on the resolution(zoom). This way zooming out increase the tolerance and make the selection of the point features easier.
+   /*  // calculating tolerance based on the resolution(zoom). This way zooming out increase the tolerance and make the selection of the point features easier.
     const pixelTolerance = 1;
     const resolution = map.getView().getResolution();
     const distanceTolerance = resolution * pixelTolerance;
@@ -138,12 +135,11 @@ function fetchFeature_Click(evt) {
       selectedFeatures.push(f);
       return false;
     });
-    //console.log(selectedFeatures);
+
     if (selectedFeatures.length > 0) {
       selectedFeatures.forEach(f => resultsSource.removeFeature(f));
       return;
-    }
-    // select
+    } */
 
     // Featurinfo in two steps. Concat serverside and clientside when serverside is finished
     const clientResult = getFeatureInfo.getFeaturesAtPixel(evt, -1);
@@ -154,13 +150,10 @@ function fetchFeature_Click(evt) {
           const serverResult = data || [];
           const result = serverResult.concat(clientResult);
           if (result.length > 0) {
-            // extracting features only. we do not need contents which is created to use in pop-up
-            var features = result.map(r => r.feature);
-            resultsSource.addFeatures(features);
+            selectionManager.addItems(result);
           }
         });
     }
-    // }
 
     return false;
   }
