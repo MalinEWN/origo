@@ -2,9 +2,15 @@
 import infowindow_overlay from './infowindow_overlay';
 import infowindow_sidebar from './infowindow_sidebar';
 import Collection from 'ol/Collection';
+import viewer from './viewer';
+import featurelayer from './featurelayer';
+
 
 let isOverlay;
 let selectedItems;
+let urval;
+let map;
+let infowindow;
 
 function addItem(item) {
   if (alreadyExists(item)) {
@@ -26,6 +32,12 @@ function removeItem(item) {
   console.log(selectedItems.getLength());
 }
 
+function removeItemById(id) {
+  selectedItems.forEach(item => {
+    if (item.getId() === id) removeItem(item);
+  }); 
+}
+
 function clearSelection() {
   selectedItems.clear();
   console.log(selectedItems.getLength());
@@ -35,6 +47,42 @@ function alreadyExists(item) {
   return selectedItems.getArray().find(i => item.getId() === i.getId());
 }
 
+function onItemAdded(event) {
+  const item = event.element;
+  const layerName = event.element.getLayer().get('name');
+  const layerTitle = event.element.getLayer().get('title');
+  
+  console.log(event.element.getLayer());
+
+  if (!urval.has(layerName)) {
+    //urval.set(layerName, new Collection([item], { unique: true }));
+    urval.set(layerName, featurelayer(null, map));
+    infowindow.createUrvalElement(layerName, layerTitle);
+  }
+
+  urval.get(layerName).addFeature(item.getFeature());
+  infowindow.createListElement(item);
+  
+  const sum = urval.get(layerName).getFeatures().length;
+  infowindow.updateUrvalElementText(layerName, layerTitle, sum);
+}
+
+function onItemRemoved(event) {
+
+  const item = event.element;
+  const layerName = event.element.getLayer().get('name');
+  const layerTitle = event.element.getLayer().get('title');
+
+  urval.get(layerName).removeFeature(item.getFeature());
+  infowindow.removeListElement(item);
+
+  const sum = urval.get(layerName).getFeatures().length;
+  infowindow.updateUrvalElementText(layerName, layerTitle, sum);
+  
+  if (urval.get(layerName).getFeatures().length < 1) {
+    infowindow.hideUrvalElement(layerName);
+  }
+}
 
 function runPolyfill() {
   if (!Array.prototype.find) {
@@ -87,14 +135,19 @@ function runPolyfill() {
 function init(options) {
   console.log('initiating selection manager');
   runPolyfill();
+  map = viewer.getMap();
   selectedItems = new Collection([], { unique: true });
+  urval = new Map();
   isOverlay = Object.prototype.hasOwnProperty.call(options, 'overlay') ? options.overlay : true;
 
   if (isOverlay) {
-    infowindow_overlay.init();
+    infowindow = infowindow_overlay.init();
   } else {
-    infowindow_sidebar.init();
+    infowindow = infowindow_sidebar.init();
   }
+
+  selectedItems.on('add', onItemAdded);
+  selectedItems.on('remove', onItemRemoved);
 }
 
 
@@ -103,5 +156,6 @@ export default {
   addItem,
   addItems,
   removeItem,
+  removeItemById,
   clearSelection
 }

@@ -116,7 +116,7 @@ function onEnableInteraction(e) {
   }
 }
 
-function fetchFeature_Click(evt) {
+function fetchFeatures_Click(evt) {
 
   //const point = evt.feature.getGeometry().getCoordinates();
   if (evt.type === 'singleclick') {
@@ -154,7 +154,7 @@ function fetchFeature_Click(evt) {
           }
         });
     }
-
+    
     return false;
   }
   return true;
@@ -170,6 +170,7 @@ function fetchFeatures_Box(evt) {
 
   // adding clint features
   resultsSource.addFeatures(results.selectedClientFeatures);
+  // adding features got from wfs GetFeature
   Promise.all(results.featuresPromise).then(data => {
     // data is an array containing corresponding arrays of features for each layer.
     data.forEach(features => resultsSource.addFeatures(features));
@@ -356,7 +357,7 @@ function createBufferedFeature(geometry, radius) {
   return bufferedOLFeature;
 }
 
-// General function that recieves a extent and some layers and returns all features in those layers that intersect the extent.
+// General function that recieves an extent and some layers and returns all features in those layers that intersect the extent.
 function getFeaturesIntersectingExtent(layers, extent) {
 
   const selectedClientFeatures = [];
@@ -432,7 +433,7 @@ function getFeaturesIntersectingGeometry(features, geometry) {
 function addInteractions() {
 
   clickInteraction = new PointerInteraction({
-    handleEvent: fetchFeature_Click
+    handleEvent: fetchFeatures_Click
   });
 
   boxInteraction = new DrawInteraction({

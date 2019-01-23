@@ -173,7 +173,7 @@ function getFeaturesFromRemote(evt) {
     if (features) {
       features.forEach((feature) => {
         requestResult.push(
-          new SelectedItem(feature)
+          new SelectedItem(feature, layer)
           /* {
           title: layer.get('title'),
           feature,
@@ -213,7 +213,7 @@ function getFeaturesAtPixel(evt, clusterFeatureinfoLevel) {
         }
         collection.forEach((f) => {
 
-          const si = new SelectedItem(f);
+          const si = new SelectedItem(f, layer);
           result.push(si);
 
           /* const item = {};
@@ -225,7 +225,7 @@ function getFeaturesAtPixel(evt, clusterFeatureinfoLevel) {
         });
       } else if (collection.length === 1 && queryable) {
 
-        const si = new SelectedItem(collection[0]);
+        const si = new SelectedItem(collection[0], layer);
         result.push(si);
 
         /* const item = {};
@@ -238,7 +238,7 @@ function getFeaturesAtPixel(evt, clusterFeatureinfoLevel) {
       }
     } else if (queryable) {
 
-      const si = new SelectedItem(feature);
+      const si = new SelectedItem(feature, layer);
       result.push(si);
       
       /* const item = {};
