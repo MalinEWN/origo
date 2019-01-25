@@ -1,11 +1,13 @@
 import { getUid } from "ol";
 
+import getAttributes from '../getattributes';
+
 export default class SelectedItem {
     constructor(feature, layer, content) {
         
         this.feature = feature;
         this.layer = layer;
-        this.content = content;
+        this.content = getAttributes(feature, layer);
     }
 
     getId() {
@@ -25,7 +27,7 @@ export default class SelectedItem {
     }
 
     getContent() {
-        return this.layer;
+        return this.content;
     }
 
     setFeature(feature) {

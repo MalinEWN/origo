@@ -26,7 +26,6 @@ function render() {
     exportContainer.classList.add('exportcontainer');
     // const svg = createSvgElement('fa-file-export', 'export-svg');
     const svg = createSvgElement('fa-caret-square-o-right', 'export-svg');
-    svg.classList.add('export-svg-container');
     exportContainer.appendChild(svg);
 
     const exportTextNodeContainer = document.createElement('div');
@@ -84,26 +83,68 @@ function createListElement(item) {
     listElement.id = item.getId();
 
     const svg = createSvgElement('fa-times-circle', 'removelistelement-svg');
-    svg.classList.add('removelistelement-svg-container');
 
     svg.addEventListener('click', (e) => {
         console.log('removing element');
         // const sublist = sublists.get(item.getLayer().get('name'));
         // sublist.removeChild(listElement);
-        
+
         // selectionManager.removeItemById();
         selectionManager.removeItem(item);
     });
 
     listElement.appendChild(svg);
 
-    const textNode = document.createTextNode(item.getId());
-    listElement.appendChild(textNode);
-
+    const listElementContentContainer = document.createElement('div');
+    listElementContentContainer.classList.add('listelement-content-container');
+    // const textNode = document.createTextNode(item.getId());
+    const content = createElementFromHTML(item.getContent()); // Content that is created in getattribute module is a template is supposed to be used with jQuery. without jQuery we cannot append it before it is converted to a proper html element.
+    listElementContentContainer.appendChild(content);
+    listElement.appendChild(listElementContentContainer);
+    
+    createExpandableContent(listElementContentContainer, content, item.getId());
+    
     const sublist = sublists.get(item.getLayer().get('name'));
     sublist.appendChild(listElement);
 
     showUrvalElement(item.getLayer().get('name'));
+}
+
+function createElementFromHTML(htmlString) {
+    var div = document.createElement('div');
+    div.innerHTML = htmlString.trim();
+
+    // Change this to div.childNodes to support multiple top-level nodes
+    return div.firstChild;
+}
+
+function createExpandableContent(listElementContentContainer, content, elementId) {
+
+    const items = content.querySelectorAll('ul > li');
+    const ul = content.getElementsByTagName('ul');
+    console.log(items.length);
+
+    if (items.length > 2) {
+
+        const rightArrowSvg = createSvgElement('fa-chevron-right', 'expandlistelement-svg');
+        const downArrowSvg = createSvgElement('fa-chevron-down', 'foldlistelement-svg');
+        
+        listElementContentContainer.appendChild(rightArrowSvg);
+        listElementContentContainer.addEventListener('click', (e) => {
+            listElementContentContainer.removeChild(rightArrowSvg);
+            listElementContentContainer.appendChild(downArrowSvg);
+        });
+    }
+
+
+    listElementContentContainer.addEventListener('click', (e) => {
+        
+        if (e.target.tagName.toUpperCase() === "A") return;
+        
+        console.log('list element clicked!');
+        console.log(elementId);
+        selectionManager.highlightFeature(elementId);
+    });
 }
 
 function showUrvalElement(layerName) {
@@ -126,7 +167,8 @@ function createSvgElement(id, className) {
     useElem.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#' + id);
     svgElem.appendChild(useElem);
     svgContainer.appendChild(svgElem);
-    
+    svgContainer.classList.add(className + '-container');
+
     return svgContainer;
 }
 

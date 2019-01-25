@@ -17,19 +17,19 @@ function addItem(item) {
     return;
   }
   selectedItems.push(item);
-  console.log(selectedItems.getLength());
+  // console.log(selectedItems.getLength());
 }
 
 function addItems(items) {
   items.forEach(item => {
     addItem(item);
   });
-  console.log(selectedItems.getLength());
+  // console.log(selectedItems.getLength());
 }
 
 function removeItem(item) {
   selectedItems.remove(item);
-  console.log(selectedItems.getLength());
+  // console.log(selectedItems.getLength());
 }
 
 function removeItemById(id) {
@@ -40,7 +40,7 @@ function removeItemById(id) {
 
 function clearSelection() {
   selectedItems.clear();
-  console.log(selectedItems.getLength());
+  // console.log(selectedItems.getLength());
 }
 
 function alreadyExists(item) {
@@ -72,8 +72,10 @@ function onItemRemoved(event) {
   const item = event.element;
   const layerName = event.element.getLayer().get('name');
   const layerTitle = event.element.getLayer().get('title');
+  const feature = item.getFeature();
+  feature.unset('state', 'selected');
 
-  urval.get(layerName).removeFeature(item.getFeature());
+  urval.get(layerName).removeFeature(feature);
   infowindow.removeListElement(item);
 
   const sum = urval.get(layerName).getFeatures().length;
@@ -82,6 +84,18 @@ function onItemRemoved(event) {
   if (urval.get(layerName).getFeatures().length < 1) {
     infowindow.hideUrvalElement(layerName);
   }
+}
+
+function highlightFeature(id) {
+  selectedItems.forEach(item => {
+    const feature = item.getFeature();
+    if (item.getId() === id)
+      feature.set('state', 'selected');
+    else
+      feature.unset('state', 'selected');
+  });
+  // we need to manually refresh other layers, otherwise unselecting does not take effect until the next layer refresh which is a bit strange!
+  urval.forEach((value, key, map) => value.refresh())
 }
 
 function runPolyfill() {
@@ -150,12 +164,12 @@ function init(options) {
   selectedItems.on('remove', onItemRemoved);
 }
 
-
 export default {
   init,
   addItem,
   addItems,
   removeItem,
   removeItemById,
-  clearSelection
+  clearSelection,
+  highlightFeature
 }
