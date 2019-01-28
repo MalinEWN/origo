@@ -52,8 +52,6 @@ function onItemAdded(event) {
   const layerName = event.element.getLayer().get('name');
   const layerTitle = event.element.getLayer().get('title');
   
-  console.log(event.element.getLayer());
-
   if (!urval.has(layerName)) {
     //urval.set(layerName, new Collection([item], { unique: true }));
     urval.set(layerName, featurelayer(null, map));
@@ -65,6 +63,8 @@ function onItemAdded(event) {
   
   const sum = urval.get(layerName).getFeatures().length;
   infowindow.updateUrvalElementText(layerName, layerTitle, sum);
+
+  infowindow.show();
 }
 
 function onItemRemoved(event) {
@@ -83,6 +83,10 @@ function onItemRemoved(event) {
   
   if (urval.get(layerName).getFeatures().length < 1) {
     infowindow.hideUrvalElement(layerName);
+  }
+
+  if (selectedItems.getLength() < 1) {
+    infowindow.hide();
   }
 }
 

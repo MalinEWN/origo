@@ -18,6 +18,10 @@ function render() {
     const urvalTextNode = document.createTextNode('Urval');
     urvalTextNodeContainer.appendChild(urvalTextNode);
     urvalContainer.appendChild(urvalTextNodeContainer);
+    const closeButtonSvg = createSvgElement('fa-window-close', 'closebutton-svg');
+    closeButtonSvg.addEventListener('click', (e) => selectionManager.clearSelection());
+    urvalContainer.appendChild(closeButtonSvg);
+
 
     listContainer = document.createElement('div');
     listContainer.classList.add('listcontainer');
@@ -101,9 +105,9 @@ function createListElement(item) {
     const content = createElementFromHTML(item.getContent()); // Content that is created in getattribute module is a template is supposed to be used with jQuery. without jQuery we cannot append it before it is converted to a proper html element.
     listElementContentContainer.appendChild(content);
     listElement.appendChild(listElementContentContainer);
-    
+
     createExpandableContent(listElementContentContainer, content, item.getId());
-    
+
     const sublist = sublists.get(item.getLayer().get('name'));
     sublist.appendChild(listElement);
 
@@ -121,27 +125,48 @@ function createElementFromHTML(htmlString) {
 function createExpandableContent(listElementContentContainer, content, elementId) {
 
     const items = content.querySelectorAll('ul > li');
-    const ul = content.getElementsByTagName('ul');
-    console.log(items.length);
+    const itemsContainer = content.getElementsByTagName('ul')[0];
 
     if (items.length > 2) {
 
         const rightArrowSvg = createSvgElement('fa-chevron-right', 'expandlistelement-svg');
-        const downArrowSvg = createSvgElement('fa-chevron-down', 'foldlistelement-svg');
-        
+
         listElementContentContainer.appendChild(rightArrowSvg);
+        listElementContentContainer.setAttribute('expanded', 'false');
+
+        const foldedItems = [];
+        for (let i = 2; i < items.length; i++) {
+            const item = items[i];
+            item.classList.add('folded');
+            foldedItems.push(item);
+        }
+
         listElementContentContainer.addEventListener('click', (e) => {
-            listElementContentContainer.removeChild(rightArrowSvg);
-            listElementContentContainer.appendChild(downArrowSvg);
+            const isExpanded = listElementContentContainer.getAttribute('expanded');
+            if (isExpanded === 'true') {
+                rightArrowSvg.classList.remove('rotated');
+                listElementContentContainer.setAttribute('expanded', 'false');
+                foldedItems.forEach(item => {
+                    item.classList.add('folded');
+                    item.classList.remove('unfolded');
+                });
+
+            } else {
+                rightArrowSvg.classList.add('rotated');
+                listElementContentContainer.setAttribute('expanded', 'true');
+                foldedItems.forEach(item => {
+                    item.classList.add('unfolded');
+                    item.classList.remove('folded');
+                });
+            }
         });
     }
 
 
     listElementContentContainer.addEventListener('click', (e) => {
-        
+
         if (e.target.tagName.toUpperCase() === "A") return;
-        
-        console.log('list element clicked!');
+
         console.log(elementId);
         selectionManager.highlightFeature(elementId);
     });
@@ -154,8 +179,20 @@ function showUrvalElement(layerName) {
 
 function removeListElement(item) {
     const sublist = sublists.get(item.getLayer().get('name'));
-    const listElement = document.getElementById(item.getId());
-    sublist.removeChild(listElement);
+
+    // This loop is needed because when clear() is called it will try to remove ALL elements, but elements 
+    // for not-selected list are already removed, thus the element found by id becomes null if document.getElementById was used.
+    // Also when removing an item by ctrl + click, the item might not be in the active list, but still nerds to be removed.
+    // obs! getElementById works only on document and not on the element.
+    let listElement;
+    for (let i = 0; i < sublist.children.length; i++) {
+        if (sublist.children[i].id === item.getId()) {
+            listElement = sublist.children[i];
+        }
+    }
+    
+    if (listElement)
+        sublist.removeChild(listElement);
 }
 
 function createSvgElement(id, className) {
@@ -183,6 +220,16 @@ function updateUrvalElementText(layerName, layerTitle, sum) {
     urvalElement.childNodes[0].nodeValue = newNodeValue;
 }
 
+function hideInfowondow() {
+    const infowindow = document.getElementsByClassName('sidebarcontainer');
+    infowindow[0].classList.add('hidden');
+}
+
+function showInfowindow() {
+    const infowindow = document.getElementsByClassName('sidebarcontainer');
+    infowindow[0].classList.remove('hidden');
+}
+
 function init() {
 
     // runPollyfill();
@@ -196,7 +243,9 @@ function init() {
         createListElement: createListElement,
         removeListElement: removeListElement,
         hideUrvalElement: hideUrvalElement,
-        updateUrvalElementText: updateUrvalElementText
+        updateUrvalElementText: updateUrvalElementText,
+        hide: hideInfowondow,
+        show: showInfowindow
     };
 }
 

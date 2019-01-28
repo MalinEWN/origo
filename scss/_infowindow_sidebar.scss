@@ -39,6 +39,21 @@
 }
 
 
+.closebutton-svg-container {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  height: 1em;
+  width: 1em;
+  cursor: pointer;
+}
+
+.closebutton-svg {
+  height: 100%;
+  width: 100%;
+  fill: rgb(77, 77, 77);
+}
+
 /** 
  * ============ List ==============
  */
@@ -74,25 +89,54 @@
   cursor: pointer;
 }
 
-.expandlistelement-svg, 
-.foldlistelement-svg {
+.expandlistelement-svg {
   height: 100%;
   width: 100%;
-  fill: rgb(26, 21, 21);
+  fill: rgb(100, 100, 100);
 }
 
-.expandlistelement-svg-container,
-.foldlistelement-svg-container {
-  // display: inline-block;
-  height: 1em;
-  width: 1em;
+.expandlistelement-svg-container {
+  height: 1.3em;
+  width: 1.3em;
   float: right;
-  // padding: 0.5em 1em;
+  margin-top: 0.5em;
+  transition: 0.5s;
+}
+
+.rotated {
+  -ms-transform: rotate(90deg); /* IE 9 */
+  -webkit-transform: rotate(90deg); /* Safari */
+  transform: rotate(90deg);
+  transition: 0.5s;
+  -webkit-transition: .5s;
+  -moz-transition: .5s;   
+  -ms-transition: .5s;   
+  -o-transition: .5s;
 }
 
 .o-identify-content {
   display: inline-block;
-  // width: 250px;
+  width: 235px; // bredd måste sättas annars expand ikonen faller ner i ie och edge.
+}
+
+.folded {
+  max-height: 0px;
+  overflow: hidden;
+  transition: max-height .5s;
+  -webkit-transition: max-height .5s;
+  -moz-transition: max-height .5s;   
+  -ms-transition: max-height .5s;   
+  -o-transition: max-height .5s;
+}
+
+.unfolded {
+  max-height: 5em;
+  overflow: hidden;
+  transition: max-height 1s;
+  -webkit-transition: max-height 1s;
+  -moz-transition: max-height 1s;   
+  -ms-transition: max-height 1s;   
+  -o-transition: max-height 1s;
 }
 
 /** 
