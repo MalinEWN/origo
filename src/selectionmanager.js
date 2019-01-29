@@ -5,7 +5,6 @@ import Collection from 'ol/Collection';
 import viewer from './viewer';
 import featurelayer from './featurelayer';
 
-
 let isOverlay;
 let selectedItems;
 let urval;
@@ -17,14 +16,34 @@ function addItem(item) {
     return;
   }
   selectedItems.push(item);
-  // console.log(selectedItems.getLength());
 }
 
 function addItems(items) {
   items.forEach(item => {
     addItem(item);
   });
-  // console.log(selectedItems.getLength());
+}
+
+function addAndExpandItem(item) {
+  if (!alreadyExists(item)) {
+    selectedItems.push(item);
+    const featureId = item.getFeature().getId();
+    highlightFeatureById(featureId);
+    infowindow.expandListElement(featureId);
+    infowindow.showSelectedList(item.getLayer().get('name'));
+  }
+}
+
+function addOrHighlightItem(item) {
+  if (alreadyExists(item)) {
+    const featureId = item.getFeature().getId();
+    highlightFeatureById(featureId);
+    infowindow.expandListElement(featureId);
+  } else if (selectedItems.getLength() < 1) {
+    addAndExpandItem(item);
+  } else {
+    selectedItems.push(item);
+  }
 }
 
 function removeItem(item) {
@@ -32,10 +51,25 @@ function removeItem(item) {
   // console.log(selectedItems.getLength());
 }
 
+function removeItems(items) {
+
+  const itemsToBeRemoved = [];
+  items.forEach(item => {
+    selectedItems.forEach(si => {
+      if (item.getId() === si.getId()) {
+        itemsToBeRemoved.push(si);
+      }
+    });
+  });
+  itemsToBeRemoved.forEach(item => selectedItems.remove(item));
+}
+
 function removeItemById(id) {
   selectedItems.forEach(item => {
-    if (item.getId() === id) removeItem(item);
-  }); 
+    if (item.getId() === id) {
+      selectedItems.remove(item);
+    }
+  });
 }
 
 function clearSelection() {
@@ -51,7 +85,7 @@ function onItemAdded(event) {
   const item = event.element;
   const layerName = event.element.getLayer().get('name');
   const layerTitle = event.element.getLayer().get('title');
-  
+
   if (!urval.has(layerName)) {
     //urval.set(layerName, new Collection([item], { unique: true }));
     urval.set(layerName, featurelayer(null, map));
@@ -60,7 +94,7 @@ function onItemAdded(event) {
 
   urval.get(layerName).addFeature(item.getFeature());
   infowindow.createListElement(item);
-  
+
   const sum = urval.get(layerName).getFeatures().length;
   infowindow.updateUrvalElementText(layerName, layerTitle, sum);
 
@@ -80,7 +114,7 @@ function onItemRemoved(event) {
 
   const sum = urval.get(layerName).getFeatures().length;
   infowindow.updateUrvalElementText(layerName, layerTitle, sum);
-  
+
   if (urval.get(layerName).getFeatures().length < 1) {
     infowindow.hideUrvalElement(layerName);
   }
@@ -90,7 +124,7 @@ function onItemRemoved(event) {
   }
 }
 
-function highlightFeature(id) {
+function highlightFeatureById(id) {
   selectedItems.forEach(item => {
     const feature = item.getFeature();
     if (item.getId() === id)
@@ -100,6 +134,10 @@ function highlightFeature(id) {
   });
   // we need to manually refresh other layers, otherwise unselecting does not take effect until the next layer refresh which is a bit strange!
   urval.forEach((value, key, map) => value.refresh())
+}
+
+function highlightFeature(feature) {
+  feature.set('state', 'selected');
 }
 
 function runPolyfill() {
@@ -170,10 +208,12 @@ function init(options) {
 
 export default {
   init,
-  addItem,
   addItems,
   removeItem,
+  removeItems,
+  addOrHighlightItem,
   removeItemById,
   clearSelection,
+  highlightFeatureById,
   highlightFeature
 }

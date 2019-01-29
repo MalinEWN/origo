@@ -121,6 +121,7 @@ function fetchFeatures_Click(evt) {
   //const point = evt.feature.getGeometry().getCoordinates();
   if (evt.type === 'singleclick') {
 
+    const isCtrlKeyPressed = evt.originalEvent.ctrlKey;
    /*  // calculating tolerance based on the resolution(zoom). This way zooming out increase the tolerance and make the selection of the point features easier.
     const pixelTolerance = 1;
     const resolution = map.getView().getResolution();
@@ -149,8 +150,19 @@ function fetchFeatures_Click(evt) {
         .done((data) => {
           const serverResult = data || [];
           const result = serverResult.concat(clientResult);
-          if (result.length > 0) {
-            selectionManager.addItems(result);
+          if (isCtrlKeyPressed) {
+            if (result.length > 0) {
+              selectionManager.removeItems(result);
+              console.log(result);
+            }
+          } else {
+            if (result.length === 1) {
+              console.log(result.length);
+              selectionManager.addOrHighlightItem(result[0]);
+            } else if (result.length > 1) {
+              console.log(result.length);
+              selectionManager.addItems(result);
+            }
           }
         });
     }

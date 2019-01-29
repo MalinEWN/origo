@@ -5,6 +5,7 @@ let urvalContainer;
 let listContainer;
 let sublists;
 let urvalElements;
+let expandableContents;
 
 function render() {
 
@@ -57,26 +58,32 @@ function createUrvalElement(layerName, layerTitle) {
     const textNode = document.createTextNode(layerTitle);
     urvalElement.appendChild(textNode);
 
-    urvalElement.addEventListener('click', (e) => {
-
-        while (listContainer.firstChild) {
-            listContainer.removeChild(listContainer.firstChild);
-        }
-
-        const sublistToAppend = sublists.get(layerName);
-        listContainer.appendChild(sublistToAppend);
-
-        urvalElements.forEach((value, key, map) => {
-            value.classList.remove('selectedurvalelement');
-        });
-        urvalElement.classList.add('selectedurvalelement');
-    });
-
     urvalContainer.appendChild(urvalElement);
     urvalElements.set(layerName, urvalElement);
 
+    urvalElement.addEventListener('click', (e) => {
+        showSelectedList(layerName);
+    });
+
     const sublistContainter = document.createElement('div');
     sublists.set(layerName, sublistContainter);
+}
+
+function showSelectedList(layerName) {
+    while (listContainer.firstChild) {
+        listContainer.removeChild(listContainer.firstChild);
+    }
+
+    const sublistToAppend = sublists.get(layerName);
+    listContainer.appendChild(sublistToAppend);
+
+    urvalElements.forEach((value, key, map) => {
+        if (key === layerName) {
+            value.classList.add('selectedurvalelement');
+        } else {
+            value.classList.remove('selectedurvalelement');
+        }
+    });
 }
 
 function createListElement(item) {
@@ -125,7 +132,6 @@ function createElementFromHTML(htmlString) {
 function createExpandableContent(listElementContentContainer, content, elementId) {
 
     const items = content.querySelectorAll('ul > li');
-    const itemsContainer = content.getElementsByTagName('ul')[0];
 
     if (items.length > 2) {
 
@@ -142,6 +148,9 @@ function createExpandableContent(listElementContentContainer, content, elementId
         }
 
         listElementContentContainer.addEventListener('click', (e) => {
+
+            if (e.target.tagName.toUpperCase() === "A") return;
+
             const isExpanded = listElementContentContainer.getAttribute('expanded');
             if (isExpanded === 'true') {
                 rightArrowSvg.classList.remove('rotated');
@@ -158,18 +167,51 @@ function createExpandableContent(listElementContentContainer, content, elementId
                     item.classList.add('unfolded');
                     item.classList.remove('folded');
                 });
+                selectionManager.highlightFeatureById(elementId);
             }
         });
+
+        listElementContentContainer.expand = function () {
+            const isExpanded = listElementContentContainer.getAttribute('expanded');
+            if (isExpanded === 'false') {
+                rightArrowSvg.classList.add('rotated');
+                listElementContentContainer.setAttribute('expanded', 'true');
+                foldedItems.forEach(item => {
+                    item.classList.add('unfolded');
+                    item.classList.remove('folded');
+                });
+            }
+        };
+
+        expandableContents.set(elementId, listElementContentContainer);
+
+    } else {
+
+        listElementContentContainer.addEventListener('click', (e) => {
+
+            if (e.target.tagName.toUpperCase() === "A") return;
+            selectionManager.highlightFeatureById(elementId);
+        });
+    }
+}
+
+function expandListElement(featureId) {
+    // This method expands the element even if it is not in the active list.
+    const element = expandableContents.get(featureId);
+    if (element) {
+        element.expand();
     }
 
-
-    listElementContentContainer.addEventListener('click', (e) => {
-
-        if (e.target.tagName.toUpperCase() === "A") return;
-
-        console.log(elementId);
-        selectionManager.highlightFeature(elementId);
-    });
+    /*
+    This method works as well, but it olny expands an element of an active list (elements that are appended and exist in the DOM)
+    const element = document.getElementById(featureId);
+    if (element) {
+        const listElementContentContainer = element.getElementsByClassName('listelement-content-container')[0];
+        if (listElementContentContainer.expand) {
+            listElementContentContainer.expand();
+        }
+    }
+    */
 }
 
 function showUrvalElement(layerName) {
@@ -190,7 +232,7 @@ function removeListElement(item) {
             listElement = sublist.children[i];
         }
     }
-    
+
     if (listElement)
         sublist.removeChild(listElement);
 }
@@ -235,17 +277,21 @@ function init() {
     // runPollyfill();
     sublists = new Map();
     urvalElements = new Map();
+    expandableContents = new Map();
+
     console.log('initiating infowindow_sidebar');
     render();
 
     return {
-        createUrvalElement: createUrvalElement,
         createListElement: createListElement,
         removeListElement: removeListElement,
+        expandListElement: expandListElement,
+        createUrvalElement: createUrvalElement,
         hideUrvalElement: hideUrvalElement,
         updateUrvalElementText: updateUrvalElementText,
+        showSelectedList: showSelectedList,
         hide: hideInfowondow,
-        show: showInfowindow
+        show: showInfowindow,
     };
 }
 
