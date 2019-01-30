@@ -19,7 +19,7 @@ import modal from '../modal';
 import { selectionLayer } from '../featureinfo';
 import GeometryType from 'ol/geom/GeometryType';
 import selectionManager from '../selectionmanager';
-import SelectedItem from '../models/SelectedItem'
+import SelectedItem from '../models/SelectedItem';
 
 // import Style from '../style';
 // import StyleTypes from '../style/styletypes';
@@ -122,25 +122,6 @@ function fetchFeatures_Click(evt) {
   if (evt.type === 'singleclick') {
 
     const isCtrlKeyPressed = evt.originalEvent.ctrlKey;
-   /*  // calculating tolerance based on the resolution(zoom). This way zooming out increase the tolerance and make the selection of the point features easier.
-    const pixelTolerance = 1;
-    const resolution = map.getView().getResolution();
-    const distanceTolerance = resolution * pixelTolerance;
-    // console.log(resolution);
-    const extent = [evt.coordinate[0] - distanceTolerance, evt.coordinate[1] - distanceTolerance, evt.coordinate[0] + distanceTolerance, evt.coordinate[1] + distanceTolerance];
-    // console.log(extent);
-    //const selectedFeatures = resultsSource.getFeaturesAtCoordinate(evt.coordinate);
-    // using extent to be able to deselect point features as well.
-    const selectedFeatures = [];
-    resultsSource.forEachFeatureIntersectingExtent(extent, f => {
-      selectedFeatures.push(f);
-      return false;
-    });
-
-    if (selectedFeatures.length > 0) {
-      selectedFeatures.forEach(f => resultsSource.removeFeature(f));
-      return;
-    } */
 
     // Featurinfo in two steps. Concat serverside and clientside when serverside is finished
     const clientResult = getFeatureInfo.getFeaturesAtPixel(evt, -1);
@@ -166,7 +147,7 @@ function fetchFeatures_Click(evt) {
           }
         });
     }
-    
+
     return false;
   }
   return true;
@@ -178,20 +159,20 @@ function fetchFeatures_Box(evt) {
   const layers = viewer.getQueryableLayers();
   if (layers.length < 1) return;
 
-  const results = getFeaturesIntersectingExtent(layers, extent);
+  const results = getItemsIntersectingExtent(layers, extent);
 
   // adding clint features
-  resultsSource.addFeatures(results.selectedClientFeatures);
+  selectionManager.addItems(results.selectedClientItems);
   // adding features got from wfs GetFeature
-  Promise.all(results.featuresPromise).then(data => {
-    // data is an array containing corresponding arrays of features for each layer.
-    data.forEach(features => resultsSource.addFeatures(features));
-  });
+  Promise.all(results.selectedRemoteItemsPromises).then(data => {
+    // data is an array containing corresponding array of features for each layer.
+    data.forEach(items => selectionManager.addItems(items));
+  }).catch(err => console.error(err));
 }
 
 function fetchFeatures_Circle(evt) {
 
-  // Things needed to be done on 'drawend
+  // Things needed to be done on 'drawend'
   // ==>
   sketch = null;
   removeRadiusLengthTooltip();
@@ -203,14 +184,14 @@ function fetchFeatures_Circle(evt) {
   const extent = circle.getExtent();
   const layers = viewer.getQueryableLayers();
 
-  const results = getFeaturesIntersectingExtent(layers, extent);
+  const results = getItemsIntersectingExtent(layers, extent);
 
   // adding clint features
-  resultsSource.addFeatures(getFeaturesIntersectingGeometry(results.selectedClientFeatures, circle));
+  selectionManager.addItems(getItemsIntersectingGeometry(results.selectedClientItems, circle));
   // adding features got from wfs GetFeature
-  Promise.all(results.featuresPromise).then(data => {
+  Promise.all(results.selectedRemoteItemsPromises).then(data => {
     // data is an array containing corresponding arrays of features for each layer.
-    data.forEach(features => resultsSource.addFeatures(getFeaturesIntersectingGeometry(features, circle)));
+    data.forEach(items => selectionManager.addItems(getItemsIntersectingGeometry(items, circle)));
   });
   /*
   Uncomment this to draw the extent on the map for debugging porposes
@@ -236,7 +217,7 @@ function fetchFeatures_Buffer_click(evt) {
           const result = serverResult.concat(clientResult);
           if (result.length > 0) {
             // extracting features only. we do not need contents which is created to use in pop-up
-            const features = result.map(r => r.feature);
+            const features = result.map(item => item.getFeature());
             let promise;
             if (features.length === 1) {
               bufferFeature = features[0].clone();
@@ -326,16 +307,15 @@ function fetchFeatures_Buffer_buffer(radius) {
   resultsSource.addFeature(f);
   */
 
-  const results = getFeaturesIntersectingExtent(layers, extent);
+  const results = getItemsIntersectingExtent(layers, extent);
 
   // adding clint features
-  resultsSource.addFeatures(getFeaturesIntersectingGeometry(results.selectedClientFeatures, bufferedGeometry));
+  selectionManager.addItems(getItemsIntersectingGeometry(results.selectedClientItems, bufferedGeometry));
   // adding features got from wfs GetFeature
-  Promise.all(results.featuresPromise).then(data => {
+  Promise.all(results.selectedRemoteItemsPromises).then(data => {
     // data is an array containing corresponding arrays of features for each layer.
-    data.forEach(features => resultsSource.addFeatures(getFeaturesIntersectingGeometry(features, bufferedGeometry)));
+    data.forEach(items => selectionManager.addItems(getItemsIntersectingGeometry(items, bufferedGeometry)));
   });
-
 }
 
 // General function that recieves a geometry and a radius and returns a buffered feature
@@ -370,33 +350,48 @@ function createBufferedFeature(geometry, radius) {
 }
 
 // General function that recieves an extent and some layers and returns all features in those layers that intersect the extent.
-function getFeaturesIntersectingExtent(layers, extent) {
+function getItemsIntersectingExtent(layers, extent) {
 
-  const selectedClientFeatures = [];
-  const featuresPromise = [];
+  const selectedClientItems = [];
+  const selectedRemoteItemsPromises = [];
 
   layers.forEach(layer => {
     // check if layer supports this method, or basically is some sort of vector layer.
-    // Alternatively we can check layer.getType === 'VECTOR', but a bit unsure if all types of vector layer have 'VECTOR' as type.
+    // Alternatively we can check layer.getType() === 'VECTOR', but a bit unsure if all types of vector layer have 'VECTOR' as type.
     // Basically here we get all vector features from client.
     if (layer.getSource().forEachFeatureIntersectingExtent) {
       layer.getSource().forEachFeatureIntersectingExtent(extent, (feature) => {
-        selectedClientFeatures.push(feature);
+        const item = new SelectedItem(feature, layer);
+        selectedClientItems.push(item);
       });
     } else {
-      featuresPromise.push(wfs.request(layer, extent));
+      selectedRemoteItemsPromises.push(getFeaturesFromWfsServer(layer, extent));
     }
   });
 
   return {
-    selectedClientFeatures: selectedClientFeatures,
-    featuresPromise: featuresPromise
+    selectedClientItems: selectedClientItems,
+    selectedRemoteItemsPromises: selectedRemoteItemsPromises
   };
+}
+
+function getFeaturesFromWfsServer(layer, extent) {
+  return new Promise(function (resolve, reject) {
+    const req = wfs.request(layer, extent);
+    req
+    .then(data => {
+      const selectedRemoteItems = data.map(feature => {
+        return new SelectedItem(feature, layer);
+      });
+      resolve(selectedRemoteItems);
+    })
+    .catch(err => console.error(err));
+  });
 }
 
 // General function that recieves a list of features and a geometry, then removes all the features that lie outside of the geometry.
 // Do not confuse this function with getFeaturesIntersectingExtent!
-function getFeaturesIntersectingGeometry(features, geometry) {
+function getItemsIntersectingGeometry(items, geometry) {
 
   const format = new GeoJSON();
   const projection = map.getView().getProjection();
@@ -414,15 +409,16 @@ function getFeaturesIntersectingGeometry(features, geometry) {
     turfGeometry = format.writeGeometryObject(geometry);
   }
 
-  const intersectingFeatures = [];
+  const intersectingItems = [];
 
-  features.forEach(feature => {
+  items.forEach(item => {
+    const feature = item.getFeature();
     feature.getGeometry().transform(projection, 'EPSG:4326');
     const turfFeature = format.writeFeatureObject(feature);
     const booleanDisjoint = disjoint(turfFeature, turfGeometry);
 
     if (!booleanDisjoint) {
-      intersectingFeatures.push(feature);
+      intersectingItems.push(item);
     }
 
     feature.getGeometry().transform('EPSG:4326', projection);
@@ -439,7 +435,7 @@ function getFeaturesIntersectingGeometry(features, geometry) {
   console.log(intersectingFeatures.length);
 */
 
-  return intersectingFeatures;
+  return intersectingItems;
 }
 
 function addInteractions() {
@@ -673,28 +669,28 @@ function bindUIActions() {
 function runpolyfill() {
   if (!Array.prototype.find) {
     Object.defineProperty(Array.prototype, 'find', {
-      value: function(predicate) {
-       // 1. Let O be ? ToObject(this value).
+      value: function (predicate) {
+        // 1. Let O be ? ToObject(this value).
         if (this == null) {
           throw new TypeError('"this" is null or not defined');
         }
-  
+
         var o = Object(this);
-  
+
         // 2. Let len be ? ToLength(? Get(O, "length")).
         var len = o.length >>> 0;
-  
+
         // 3. If IsCallable(predicate) is false, throw a TypeError exception.
         if (typeof predicate !== 'function') {
           throw new TypeError('predicate must be a function');
         }
-  
+
         // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
         var thisArg = arguments[1];
-  
+
         // 5. Let k be 0.
         var k = 0;
-  
+
         // 6. Repeat, while k < len
         while (k < len) {
           // a. Let Pk be ! ToString(k).
@@ -708,7 +704,7 @@ function runpolyfill() {
           // e. Increase k by 1.
           k++;
         }
-  
+
         // 7. Return undefined.
         return undefined;
       },
@@ -723,7 +719,7 @@ function init(optOptions) {
   // const options = optOptions || {};
   // const savedSelection = options.savedSelection || undefined;
   // const savedPin = options.savedPin ? maputils.createPointFeature(options.savedPin, pinStyle) : undefined;
-  
+
   runpolyfill();
   defaultTool = 'click';
   clickSelection = true, boxSelection = true, circleSelection = true, bufferSelection = true;

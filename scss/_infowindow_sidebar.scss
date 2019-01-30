@@ -96,11 +96,13 @@
 }
 
 .expandlistelement-svg-container {
-  height: 1.3em;
-  width: 1.3em;
+  height: 1em;
+  width: 1em;
   float: right;
-  margin-top: 0.5em;
   transition: 0.5s;
+  // margin-top: 0.5em; 
+  // In case the seceonf attribute is not definded for a feature or takes more than on line setting margin-top cause that it becamoes heterogeneous.
+  // It is better to leave the expand arrow to stay always up top because we never know how much height an element is going to have.
 }
 
 .rotated {

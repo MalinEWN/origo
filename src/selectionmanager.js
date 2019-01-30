@@ -19,9 +19,13 @@ function addItem(item) {
 }
 
 function addItems(items) {
-  items.forEach(item => {
-    addItem(item);
-  });
+  if (items.length === 1 && selectedItems.getLength() < 1) {
+    addAndExpandItem(items[0]);
+  } else {
+    items.forEach(item => {
+      addItem(item);
+    });
+  }
 }
 
 function addAndExpandItem(item) {
@@ -39,10 +43,9 @@ function addOrHighlightItem(item) {
     const featureId = item.getFeature().getId();
     highlightFeatureById(featureId);
     infowindow.expandListElement(featureId);
-  } else if (selectedItems.getLength() < 1) {
-    addAndExpandItem(item);
   } else {
-    selectedItems.push(item);
+    // using addItems so that addAndExpandItem takes effect
+    addItems([item]);
   }
 }
 

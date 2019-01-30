@@ -40,7 +40,7 @@ export default function (features, map) {
         width: 3
       }),
       fill: new Fill({
-        color: 'rgba(0, 0, 255, 0.1)'
+        color: 'rgba(0, 255, 0, 0.1)'
       })
     }),
     new Style({
