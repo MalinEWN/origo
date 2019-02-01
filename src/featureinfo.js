@@ -41,25 +41,28 @@ function clear() {
 function callback(evt) {
   const currentItem = evt.item.index;
   if (currentItem !== null) {
-    const clone = items[currentItem].feature.clone();
-    clone.setId(items[currentItem].feature.getId());
+    const clone = items[currentItem].getFeature().clone();
+    clone.setId(items[currentItem].getFeature().getId());
     selectionLayer.clearAndAdd(
       clone,
       selectionStyles[items[currentItem].feature.getGeometry().getType()]
     );
-    const layer = viewer.getLayersByProperty('name', items[currentItem].name)[0];
+    // const layer = viewer.getLayersByProperty('name', items[currentItem].name)[0];
+    const layer = items[currentItem].getLayer();
     const featureinfoTitle = layer.getProperties().featureinfoTitle;
     let title;
     if (featureinfoTitle) {
-      const featureProps = items[currentItem].feature.getProperties();
+      const featureProps = items[currentItem].getFeature().getProperties();
       title = replacer.replace(featureinfoTitle, featureProps);
       if (!title) {
-        title = items[currentItem].title ? items[currentItem].title : items[currentItem].name;
+        // title = items[currentItem].title ? items[currentItem].title : items[currentItem].name;
+        title = items[currentItem].getLayer().get('title') ? items[currentItem].getLayer().get('title') : items[currentItem].getLayer().get('name');
       }
     } else {
-      title = items[currentItem].title ? items[currentItem].title : items[currentItem].name;
+      // title = items[currentItem].title ? items[currentItem].title : items[currentItem].name;
+      title = items[currentItem].getLayer().get('title') ? items[currentItem].getLayer().get('title') : items[currentItem].getLayer().get('name');
     }
-    selectionLayer.setSourceLayer(items[currentItem].layer);
+    selectionLayer.setSourceLayer(items[currentItem].getLayer());
     if (identifyTarget === 'overlay') {
       popup.setTitle(title);
     } else {
@@ -116,7 +119,7 @@ function getHitTolerance() {
 function identify(identifyItems, target, coordinate) {
   items = identifyItems;
   clear();
-  let content = items.map(i => i.content).join('');
+  let content = items.map(i => i.getContent()).join('');
   content = `<div id="o-identify"><div id="o-identify-carousel" class="owl-carousel owl-theme">${content}</div></div>`;
   switch (target) {
     case 'overlay':
@@ -140,7 +143,7 @@ function identify(identifyItems, target, coordinate) {
         autoPanMargin: 40,
         positioning: 'bottom-center'
       });
-      const geometry = items[0].feature.getGeometry();
+      const geometry = items[0].getFeature().getGeometry();
       const coord = geometry.getType() === 'Point' ? geometry.getCoordinates() : coordinate;
       map.addOverlay(overlay);
       overlay.setPosition(coord);
@@ -156,6 +159,7 @@ function identify(identifyItems, target, coordinate) {
       initCarousel('#o-identify-carousel');
       break;
     }
+    
     default:
     {
       break;

@@ -168,6 +168,7 @@ function createExpandableContent(listElementContentContainer, content, elementId
                     item.classList.remove('folded');
                 });
                 selectionManager.highlightFeatureById(elementId);
+                highlightListElement(elementId);
             }
         });
 
@@ -191,16 +192,21 @@ function createExpandableContent(listElementContentContainer, content, elementId
 
             if (e.target.tagName.toUpperCase() === "A") return;
             selectionManager.highlightFeatureById(elementId);
+            highlightListElement(elementId);
         });
     }
 }
 
 function expandListElement(featureId) {
     // This method expands the element even if it is not in the active list.
-    const element = expandableContents.get(featureId);
-    if (element) {
-        element.expand();
-    }
+    // We need to set the timeout otherwise our css transitions do not take effect because of browser batching the reflow.
+    // see: https://stackoverflow.com/questions/24148403/trigger-css-transition-on-appended-element
+    setTimeout(() => {
+        const element = expandableContents.get(featureId);
+        if (element) {
+            element.expand();
+        }
+    }, 100);
 
     /*
     This method works as well, but it olny expands an element of an active list (elements that are appended and exist in the DOM)
@@ -212,6 +218,55 @@ function expandListElement(featureId) {
         }
     }
     */
+}
+
+function highlightListElement(featureId) {
+    sublists.forEach(sublist => {
+        const elements = sublist.getElementsByClassName('listelement');
+        for (let index = 0; index < elements.length; index++) {
+            const element = elements[index];
+            if (element.id === featureId) {
+                setTimeout(() => {
+                    element.classList.add('highlighted');
+                }, 100);
+            } else {
+                element.classList.remove('highlighted');
+            }
+        }
+    });
+}
+
+function scrollListElementToView(featureId) {
+    sublists.forEach(sublist => {
+        const elements = sublist.getElementsByClassName('listelement');
+        for (let index = 0; index < elements.length; index++) {
+            const element = elements[index];
+            if (element.id === featureId) {
+                setTimeout(() => {
+                    
+                    const elementBoundingBox = element.getBoundingClientRect(); 
+                    console.log(elementBoundingBox);
+                    const listContainer = document.getElementsByClassName('listcontainer')[0];
+                    const listContainerBoundingBox = listContainer.getBoundingClientRect();
+                    console.log(listContainerBoundingBox);
+                    if (elementBoundingBox.top < listContainerBoundingBox.top) {
+                        // console.log(element.scrollTop);
+                        // console.log(listContainer.scrollTop );
+                        const scrollDownValue = listContainerBoundingBox.top - elementBoundingBox.top;
+                        listContainer.scrollTop = listContainer.scrollTop - scrollDownValue;
+                    } else if (elementBoundingBox.bottom > listContainerBoundingBox.bottom) {
+                        console.log(element.scrollTop);
+                        console.log(listContainer.scrollTop );
+                        
+                        const scrollUpValue = elementBoundingBox.bottom - listContainerBoundingBox.bottom;
+                        console.log(scrollUpValue);
+                        listContainer.scrollTop = listContainer.scrollTop + scrollUpValue;
+                    }
+                    
+                }, 500);
+            }
+        }
+    });
 }
 
 function showUrvalElement(layerName) {
@@ -286,10 +341,12 @@ function init() {
         createListElement: createListElement,
         removeListElement: removeListElement,
         expandListElement: expandListElement,
+        highlightListElement: highlightListElement,
         createUrvalElement: createUrvalElement,
         hideUrvalElement: hideUrvalElement,
         updateUrvalElementText: updateUrvalElementText,
         showSelectedList: showSelectedList,
+        scrollListElementToView: scrollListElementToView,
         hide: hideInfowondow,
         show: showInfowindow,
     };

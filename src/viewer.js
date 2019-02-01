@@ -462,7 +462,7 @@ function init(el, mapOptions) {
     });
   }
   featureinfo.init(settings.featureinfoOptions);
-  selectionmanager.init(settings.featureinfoOptions)
+  selectionmanager.init(settings.featureinfoOptions);
 }
 
 export default {

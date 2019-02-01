@@ -64,6 +64,7 @@
   max-height: 40em;
   overflow-y: scroll;
   margin-right: 0.5em;
+  scroll-behavior: smooth;
 }
 
 .removelistelement-svg-container {
@@ -139,6 +140,16 @@
   -moz-transition: max-height 1s;   
   -ms-transition: max-height 1s;   
   -o-transition: max-height 1s;
+}
+
+.highlighted {
+  background-color: whitesmoke;
+  transition: background-color 0.5s;
+  -webkit-transition: background-color 0.5s;
+  -moz-transition: background-color 0.5s;
+  -ms-transition: background-color 0.5s;
+  -o-transition: background-color 0.5s;
+  border-radius: 0 1em 1em 0;
 }
 
 /** 

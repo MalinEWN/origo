@@ -20,7 +20,7 @@ function addItem(item) {
 
 function addItems(items) {
   if (items.length === 1 && selectedItems.getLength() < 1) {
-    addAndExpandItem(items[0]);
+    addAndHighlightAndExpandItem(items[0]);
   } else {
     items.forEach(item => {
       addItem(item);
@@ -28,13 +28,14 @@ function addItems(items) {
   }
 }
 
-function addAndExpandItem(item) {
+function addAndHighlightAndExpandItem(item) {
   if (!alreadyExists(item)) {
     selectedItems.push(item);
     const featureId = item.getFeature().getId();
     highlightFeatureById(featureId);
-    infowindow.expandListElement(featureId);
     infowindow.showSelectedList(item.getLayer().get('name'));
+    infowindow.expandListElement(featureId);
+    infowindow.highlightListElement(featureId);
   }
 }
 
@@ -42,9 +43,12 @@ function addOrHighlightItem(item) {
   if (alreadyExists(item)) {
     const featureId = item.getFeature().getId();
     highlightFeatureById(featureId);
+    infowindow.showSelectedList(item.getLayer().get('name'));
     infowindow.expandListElement(featureId);
+    infowindow.highlightListElement(featureId);
+    infowindow.scrollListElementToView(featureId);
   } else {
-    // using addItems so that addAndExpandItem takes effect
+    // using addItems so that addAndHighlightAndExpandItem takes effect
     addItems([item]);
   }
 }
@@ -136,7 +140,7 @@ function highlightFeatureById(id) {
       feature.unset('state', 'selected');
   });
   // we need to manually refresh other layers, otherwise unselecting does not take effect until the next layer refresh which is a bit strange!
-  urval.forEach((value, key, map) => value.refresh())
+  urval.forEach((value, key, map) => value.refresh());
 }
 
 function highlightFeature(feature) {
@@ -217,6 +221,6 @@ export default {
   addOrHighlightItem,
   removeItemById,
   clearSelection,
-  highlightFeatureById,
-  highlightFeature
+  highlightFeature,
+  highlightFeatureById
 }
