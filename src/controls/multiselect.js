@@ -90,6 +90,8 @@ function onEnableInteraction(e) {
     addInteractions();
     resultsVector.setVisible(true);
     defaultButton.trigger('click');
+    // if features are added to selection managaer from featureinfo, this will clear that selection when activating multiselect.
+    selectionManager.clearSelection();
   } else {
     $('#o-multiselect-button button').removeClass('o-multiselect-button-true');
     if (clickSelection) {
@@ -112,6 +114,7 @@ function onEnableInteraction(e) {
     resultsVector.setVisible(false);
     removeRadiusLengthTooltip();
     resultsSource.clear();
+    selectionManager.clearSelection();
     setActive(false);
   }
 }

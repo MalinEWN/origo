@@ -6,10 +6,11 @@ let listContainer;
 let sublists;
 let urvalElements;
 let expandableContents;
+let mainContainer;
 
 function render() {
 
-    const mainContainer = document.createElement('div');
+    mainContainer = document.createElement('div');
     mainContainer.classList.add('sidebarcontainer');
 
     urvalContainer = document.createElement('div');
@@ -48,6 +49,8 @@ function render() {
     mainContainer.appendChild(exportContainer);
     const parentElement = document.getElementById('o-map');
     parentElement.appendChild(mainContainer);
+
+    mainContainer.classList.add('hidden');
 }
 
 function createUrvalElement(layerName, layerTitle) {
@@ -317,14 +320,16 @@ function updateUrvalElementText(layerName, layerTitle, sum) {
     urvalElement.childNodes[0].nodeValue = newNodeValue;
 }
 
-function hideInfowondow() {
-    const infowindow = document.getElementsByClassName('sidebarcontainer');
-    infowindow[0].classList.add('hidden');
+function hideInfowindow() {
+    // const infowindow = document.getElementsByClassName('sidebarcontainer');
+    // infowindow[0].classList.add('hidden');
+    mainContainer.classList.add('hidden');
 }
 
 function showInfowindow() {
-    const infowindow = document.getElementsByClassName('sidebarcontainer');
-    infowindow[0].classList.remove('hidden');
+    // const infowindow = document.getElementsByClassName('sidebarcontainer');
+    // infowindow[0].classList.remove('hidden');
+    mainContainer.classList.remove('hidden');
 }
 
 function init() {
@@ -334,7 +339,6 @@ function init() {
     urvalElements = new Map();
     expandableContents = new Map();
 
-    console.log('initiating infowindow_sidebar');
     render();
 
     return {
@@ -347,7 +351,7 @@ function init() {
         updateUrvalElementText: updateUrvalElementText,
         showSelectedList: showSelectedList,
         scrollListElementToView: scrollListElementToView,
-        hide: hideInfowondow,
+        hide: hideInfowindow,
         show: showInfowindow,
     };
 }

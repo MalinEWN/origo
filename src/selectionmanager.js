@@ -1,15 +1,14 @@
 
-import infowindow_overlay from './infowindow_overlay';
-import infowindow_sidebar from './infowindow_sidebar';
+import infowindowManager from './infowindow';
 import Collection from 'ol/Collection';
 import viewer from './viewer';
 import featurelayer from './featurelayer';
 
-let isOverlay;
 let selectedItems;
 let urval;
 let map;
 let infowindow;
+let isInfowindow;
 
 function addItem(item) {
   if (alreadyExists(item)) {
@@ -19,37 +18,38 @@ function addItem(item) {
 }
 
 function addItems(items) {
-  if (items.length === 1 && selectedItems.getLength() < 1) {
-    addAndHighlightAndExpandItem(items[0]);
-  } else {
-    items.forEach(item => {
-      addItem(item);
-    });
-  }
+  items.forEach(item => {
+    addItem(item);
+  });
 }
 
-function addAndHighlightAndExpandItem(item) {
-  if (!alreadyExists(item)) {
-    selectedItems.push(item);
-    const featureId = item.getFeature().getId();
-    highlightFeatureById(featureId);
-    infowindow.showSelectedList(item.getLayer().get('name'));
-    infowindow.expandListElement(featureId);
-    infowindow.highlightListElement(featureId);
-  }
+function highlightAndExpandItem(item) {
+  const featureId = item.getFeature().getId();
+  highlightFeatureById(featureId);
+  infowindow.showSelectedList(item.getLayer().get('name'));
+  infowindow.expandListElement(featureId);
+  infowindow.highlightListElement(featureId);
+}
+
+function highlightItem(item) {
+  const featureId = item.getFeature().getId();
+  highlightFeatureById(featureId);
+  infowindow.showSelectedList(item.getLayer().get('name'));
+  infowindow.expandListElement(featureId);
+  infowindow.highlightListElement(featureId);
+  infowindow.scrollListElementToView(featureId);
 }
 
 function addOrHighlightItem(item) {
   if (alreadyExists(item)) {
-    const featureId = item.getFeature().getId();
-    highlightFeatureById(featureId);
-    infowindow.showSelectedList(item.getLayer().get('name'));
-    infowindow.expandListElement(featureId);
-    infowindow.highlightListElement(featureId);
-    infowindow.scrollListElementToView(featureId);
+    // highlight
+    highlightItem(item);
   } else {
-    // using addItems so that addAndHighlightAndExpandItem takes effect
-    addItems([item]);
+    // add
+    selectedItems.push(item);
+    if (selectedItems.getLength() === 1) {
+      highlightAndExpandItem(item);
+    }
   }
 }
 
@@ -105,7 +105,8 @@ function onItemAdded(event) {
   const sum = urval.get(layerName).getFeatures().length;
   infowindow.updateUrvalElementText(layerName, layerTitle, sum);
 
-  infowindow.show();
+  if (isInfowindow)
+    infowindow.show();
 }
 
 function onItemRemoved(event) {
@@ -201,13 +202,9 @@ function init(options) {
   map = viewer.getMap();
   selectedItems = new Collection([], { unique: true });
   urval = new Map();
-  isOverlay = Object.prototype.hasOwnProperty.call(options, 'overlay') ? options.overlay : true;
+  isInfowindow = Object.prototype.hasOwnProperty.call(options, 'infowindow') ? options.infowindow === 'infowindow' : false;
 
-  if (isOverlay) {
-    infowindow = infowindow_overlay.init();
-  } else {
-    infowindow = infowindow_sidebar.init();
-  }
+  infowindow = infowindowManager.init();
 
   selectedItems.on('add', onItemAdded);
   selectedItems.on('remove', onItemRemoved);

@@ -16,6 +16,7 @@ import getattributes from './getattributes';
 import style from './style';
 import layerCreator from './layercreator';
 import selectionmanager from './selectionmanager';
+import SelectedItem from './models/SelectedItem';
 
 let map;
 const settings = {
@@ -435,18 +436,21 @@ function init(el, mapOptions) {
         }
 
         if (feature) {
-          const obj = {};
+         /*  const obj = {};
           obj.feature = feature;
           obj.title = layer.get('title');
           obj.content = getattributes(feature, layer);
-          obj.layer = layer;
+          obj.layer = layer; */
+          const obj = new SelectedItem(feature, layer);
 
-          const showOverlay = Object.prototype.hasOwnProperty.call(settings.featureinfoOptions, 'overlay') ? settings.featureinfoOptions.overlay : true;
+          const infowindow = Object.prototype.hasOwnProperty.call(settings.featureinfoOptions, 'infowindow') ? settings.featureinfoOptions.infowindow : 'overlay';
 
-          if (showOverlay) {
-            featureinfo.identify([obj], 'overlay', getcenter(feature.getGeometry()));
-          } else {
+          if (infowindow === 'infowindow') {
+            selectionmanager.addItems([obj]);
+          } else if (infowindow === 'sidebar') {
             featureinfo.identify([obj], 'sidebar', getcenter(feature.getGeometry()));
+          } else {
+            featureinfo.identify([obj], 'overlay', getcenter(feature.getGeometry()));
           }
           maputils.zoomToExent(feature.getGeometry(), getResolutions().length - 2);
         }

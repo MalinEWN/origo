@@ -70,12 +70,6 @@ export default function (features, map) {
     style: featureStyler
   });
 
-  // function onAddFeature(e) {
-  //   console.log(e.feature);
-  // }
-
-  // featureLayerStore.on('addfeature', onAddFeature);
-
   return {
     addFeature: function addFeature(feature) {
       featureLayerStore.addFeature(feature);

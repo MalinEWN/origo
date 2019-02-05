@@ -10,6 +10,7 @@ import Style from './style';
 import StyleTypes from './style/styletypes';
 import getFeatureInfo from './getfeatureinfo';
 import replacer from '../src/utils/replacer';
+import selectionmanager from './selectionmanager';
 
 const style = Style();
 const styleTypes = StyleTypes();
@@ -65,7 +66,7 @@ function callback(evt) {
     selectionLayer.setSourceLayer(items[currentItem].getLayer());
     if (identifyTarget === 'overlay') {
       popup.setTitle(title);
-    } else {
+    } else if (identifyTarget === 'sidebar') {
       sidebar.setTitle(title);
     }
   }
@@ -123,47 +124,58 @@ function identify(identifyItems, target, coordinate) {
   content = `<div id="o-identify"><div id="o-identify-carousel" class="owl-carousel owl-theme">${content}</div></div>`;
   switch (target) {
     case 'overlay':
-    {
-      popup = Popup('#o-map');
-      popup.setContent({
-        content,
-        title: items[0].title
-      });
-      popup.setVisibility(true);
+      {
+        popup = Popup('#o-map');
+        popup.setContent({
+          content,
+          title: items[0].title
+        });
+        popup.setVisibility(true);
 
-      initCarousel('#o-identify-carousel');
-      const popupHeight = $('.o-popup').outerHeight() + 20;
-      $('#o-popup').height(popupHeight);
-      overlay = new Overlay({
-        element: popup.getEl(),
-        autoPan: true,
-        autoPanAnimation: {
-          duration: 500
-        },
-        autoPanMargin: 40,
-        positioning: 'bottom-center'
-      });
-      const geometry = items[0].getFeature().getGeometry();
-      const coord = geometry.getType() === 'Point' ? geometry.getCoordinates() : coordinate;
-      map.addOverlay(overlay);
-      overlay.setPosition(coord);
-      break;
-    }
+        initCarousel('#o-identify-carousel');
+        const popupHeight = $('.o-popup').outerHeight() + 20;
+        $('#o-popup').height(popupHeight);
+        overlay = new Overlay({
+          element: popup.getEl(),
+          autoPan: true,
+          autoPanAnimation: {
+            duration: 500
+          },
+          autoPanMargin: 40,
+          positioning: 'bottom-center'
+        });
+        const geometry = items[0].getFeature().getGeometry();
+        const coord = geometry.getType() === 'Point' ? geometry.getCoordinates() : coordinate;
+        map.addOverlay(overlay);
+        overlay.setPosition(coord);
+        break;
+      }
     case 'sidebar':
-    {
-      sidebar.setContent({
-        content,
-        title: items[0].title
-      });
-      sidebar.setVisibility(true);
-      initCarousel('#o-identify-carousel');
-      break;
-    }
-    
+      {
+        sidebar.setContent({
+          content,
+          title: items[0].title
+        });
+        sidebar.setVisibility(true);
+        initCarousel('#o-identify-carousel');
+        break;
+      }
+    case 'infowindow': 
+      {
+        console.log('info window');
+        selectionmanager.clearSelection();
+        if (items.length === 1) {
+          selectionmanager.addOrHighlightItem(items[0]);
+        } else if (items.length > 1) {
+          selectionmanager.addItems(items);
+        }
+        break;
+      }
+
     default:
-    {
-      break;
-    }
+      {
+        break;
+      }
   }
 }
 
@@ -225,13 +237,11 @@ function init(optOptions) {
   selectionStyles = 'selectionStyles' in options ? style.createGeometryStyle(options.selectionStyles) : style.createEditStyle();
   const savedFeature = savedPin || savedSelection || undefined;
   selectionLayer = featurelayer(savedFeature, map);
-  showOverlay = Object.prototype.hasOwnProperty.call(options, 'overlay') ? options.overlay : true;
+  const infowindow = Object.prototype.hasOwnProperty.call(options, 'infowindow') ? options.infowindow : 'overlay';
 
-  if (showOverlay) {
-    identifyTarget = 'overlay';
-  } else {
+  identifyTarget = infowindow;
+  if (identifyTarget === 'sidebar') {
     sidebar.init();
-    identifyTarget = 'sidebar';
   }
 
   clusterFeatureinfoLevel = Object.prototype.hasOwnProperty.call(options, 'clusterFeatureinfoLevel') ? options.clusterFeatureinfoLevel : 1;
