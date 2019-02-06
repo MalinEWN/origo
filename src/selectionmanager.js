@@ -3,6 +3,12 @@ import infowindowManager from './infowindow';
 import Collection from 'ol/Collection';
 import viewer from './viewer';
 import featurelayer from './featurelayer';
+import Style from './style';
+import StyleTypes from './style/styletypes';
+
+const style = Style();
+const styleTypes = StyleTypes();
+const multiselectStyleOptions = styleTypes.getStyle('selection');
 
 let selectedItems;
 let urval;
@@ -55,11 +61,9 @@ function addOrHighlightItem(item) {
 
 function removeItem(item) {
   selectedItems.remove(item);
-  // console.log(selectedItems.getLength());
 }
 
 function removeItems(items) {
-
   const itemsToBeRemoved = [];
   items.forEach(item => {
     selectedItems.forEach(si => {
@@ -81,11 +85,18 @@ function removeItemById(id) {
 
 function clearSelection() {
   selectedItems.clear();
-  // console.log(selectedItems.getLength());
 }
 
 function alreadyExists(item) {
   return selectedItems.getArray().find(i => item.getId() === i.getId());
+}
+
+function featureStyler(feature) {
+  if (feature.get('state') === 'selected') {
+    return style.createStyleRule(multiselectStyleOptions.highlighted);
+  } else {
+    return style.createStyleRule(multiselectStyleOptions.selected);
+  }
 }
 
 function onItemAdded(event) {
@@ -94,8 +105,9 @@ function onItemAdded(event) {
   const layerTitle = event.element.getLayer().get('title');
 
   if (!urval.has(layerName)) {
-    //urval.set(layerName, new Collection([item], { unique: true }));
-    urval.set(layerName, featurelayer(null, map));
+    const urvalLayer = featurelayer(null, map);
+    urvalLayer.setStyle(featureStyler);
+    urval.set(layerName, urvalLayer);
     infowindow.createUrvalElement(layerName, layerTitle);
   }
 
@@ -148,6 +160,10 @@ function highlightFeature(feature) {
   feature.set('state', 'selected');
 }
 
+function getNumberOfSelectedItems() {
+  return selectedItems.getLength();
+}
+
 function runPolyfill() {
   if (!Array.prototype.find) {
     Object.defineProperty(Array.prototype, 'find', {
@@ -197,15 +213,12 @@ function runPolyfill() {
 }
 
 function init(options) {
-  console.log('initiating selection manager');
   runPolyfill();
   map = viewer.getMap();
   selectedItems = new Collection([], { unique: true });
   urval = new Map();
   isInfowindow = Object.prototype.hasOwnProperty.call(options, 'infowindow') ? options.infowindow === 'infowindow' : false;
-
   infowindow = infowindowManager.init();
-
   selectedItems.on('add', onItemAdded);
   selectedItems.on('remove', onItemRemoved);
 }
@@ -219,5 +232,6 @@ export default {
   removeItemById,
   clearSelection,
   highlightFeature,
-  highlightFeatureById
+  highlightFeatureById,
+  getNumberOfSelectedItems
 }

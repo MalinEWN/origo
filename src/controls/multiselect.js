@@ -4,36 +4,27 @@ import VectorLayer from 'ol/layer/Vector';
 import DrawInteraction, { createBox } from 'ol/interaction/Draw';
 import PointerInteraction from 'ol/interaction/Pointer';
 import Overlay from 'ol/Overlay';
-import Polygon, { fromCircle } from 'ol/geom/Polygon';
+import { fromExtent, fromCircle } from 'ol/geom/Polygon';
 import viewer from '../viewer';
 import utils from '../utils';
-import Style from 'ol/style/Style';
-import Stroke from 'ol/style/Stroke';
-import Fill from 'ol/style/Fill';
+import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style.js';
 import wfs from '../controls/offline/wfs';
 import getFeatureInfo from '../getfeatureinfo';
 import GeoJSON from 'ol/format/GeoJSON';
 import disjoint from '@turf/boolean-disjoint';
 import buffer from '@turf/buffer';
 import modal from '../modal';
-import { selectionLayer } from '../featureinfo';
 import GeometryType from 'ol/geom/GeometryType';
 import selectionManager from '../selectionmanager';
 import SelectedItem from '../models/SelectedItem';
-
-// import Style from '../style';
-// import StyleTypes from '../style/styletypes';
-
-// const style = Style();
-// const styleTypes = StyleTypes();
+import Feature from 'ol/Feature';
+import featurelayer from '../featurelayer';
 
 let map;
 let activeButton;
 let defaultButton;
 let type;
 let selectSource;
-let resultsSource;
-let resultsVector;
 let defaultTool;
 let clickSelection;
 let boxSelection;
@@ -44,13 +35,14 @@ let clickInteraction;
 let boxInteraction;
 let circleInteraction;
 let bufferInteraction;
-let testStyle;
 let sketch;
 let radius;
 let radiusXPosition;
 let radiusYPosition;
 let radiusLengthTooltip;
 let radiusLengthTooltipElement;
+let bufferFeature;
+let debugLayer;
 
 function toggleSelect() {
   if (isActive) {
@@ -88,7 +80,6 @@ function onEnableInteraction(e) {
     $('#o-multiselect-button').removeClass('o-tooltip');
     setActive(true);
     addInteractions();
-    resultsVector.setVisible(true);
     defaultButton.trigger('click');
     // if features are added to selection managaer from featureinfo, this will clear that selection when activating multiselect.
     selectionManager.clearSelection();
@@ -108,12 +99,9 @@ function onEnableInteraction(e) {
     }
     $('#o-multiselect-button').addClass('o-tooltip');
 
-    //map.un('pointermove', pointerMoveHandler);
-    //map.un('click', pointerMoveHandler);
     removeInteractions();
-    resultsVector.setVisible(false);
     removeRadiusLengthTooltip();
-    resultsSource.clear();
+    debugLayer.clear();
     selectionManager.clearSelection();
     setActive(false);
   }
@@ -123,9 +111,7 @@ function fetchFeatures_Click(evt) {
 
   //const point = evt.feature.getGeometry().getCoordinates();
   if (evt.type === 'singleclick') {
-
     const isCtrlKeyPressed = evt.originalEvent.ctrlKey;
-
     // Featurinfo in two steps. Concat serverside and clientside when serverside is finished
     const clientResult = getFeatureInfo.getFeaturesAtPixel(evt, -1);
     // Abort if clientResult is false
@@ -137,33 +123,28 @@ function fetchFeatures_Click(evt) {
           if (isCtrlKeyPressed) {
             if (result.length > 0) {
               selectionManager.removeItems(result);
-              console.log(result);
             }
           } else {
             if (result.length === 1) {
-              console.log(result.length);
               selectionManager.addOrHighlightItem(result[0]);
             } else if (result.length > 1) {
-              console.log(result.length);
               selectionManager.addItems(result);
             }
           }
         });
     }
-
     return false;
   }
   return true;
 }
 
 function fetchFeatures_Box(evt) {
-  //const extent = boxInteraction.getGeometry().getExtent();
   const extent = evt.feature.getGeometry().getExtent();
   const layers = viewer.getQueryableLayers();
-  if (layers.length < 1) return;
-
+  if (layers.length < 1) {
+    return;
+  }
   const results = getItemsIntersectingExtent(layers, extent);
-
   // adding clint features
   selectionManager.addItems(results.selectedClientItems);
   // adding features got from wfs GetFeature
@@ -182,8 +163,8 @@ function fetchFeatures_Circle(evt) {
   // <==
 
   const circle = evt.feature.getGeometry();
-  const center = circle.getCenter();
-  const radius = circle.getRadius();
+  // const center = circle.getCenter();
+  // const radius = circle.getRadius();
   const extent = circle.getExtent();
   const layers = viewer.getQueryableLayers();
 
@@ -196,15 +177,12 @@ function fetchFeatures_Circle(evt) {
     // data is an array containing corresponding arrays of features for each layer.
     data.forEach(items => selectionManager.addItems(getItemsIntersectingGeometry(items, circle)));
   });
-  /*
-  Uncomment this to draw the extent on the map for debugging porposes
-  const f = new Feature(Polygon.fromExtent(extent));
-  f.setStyle(testStyle);
-  resultsSource.addFeature(f);
-  */
+  
+  //Uncomment this to draw the extent on the map for debugging porposes
+  // const f = new Feature(fromExtent(extent));
+  // debugLayer.addFeature(f);
 }
 
-let bufferFeature;
 function fetchFeatures_Buffer_click(evt) {
 
   //console.log(evt.type);
@@ -283,7 +261,7 @@ function createRadiusModal() {
     // console.log(onlyNumbers);
     const radius = parseFloat(radiusVal);
 
-    if (!radius || (radius < 0 && bufferFeature.getGeometry().getType() === GeometryType.POINT)) {
+    if ((!radius && radius !== 0) || (radius <= 0 && bufferFeature.getGeometry().getType() === GeometryType.POINT)) {
       $('#bufferradius').addClass('unvalidValue');
       e.stopPropagation();
       return;
@@ -299,17 +277,13 @@ function fetchFeatures_Buffer_buffer(radius) {
   const geometry = bufferFeature.getGeometry();
   const bufferedFeature = createBufferedFeature(geometry, radius);
   const bufferedGeometry = bufferedFeature.getGeometry();
-
   const extent = bufferedGeometry.getExtent();
   const layers = viewer.getQueryableLayers();
 
-  /*
-  Uncomment this to draw the extent on the map for debugging porposes
-  const f = new Feature(Polygon.fromExtent(extent));
-  f.setStyle(testStyle);
-  resultsSource.addFeature(f);
-  */
-
+  // Uncomment this to draw the extent of the buffer on the map for debugging porposes
+  // const f = new Feature(fromExtent(extent));
+  // debugLayer.addFeature(f);
+  
   const results = getItemsIntersectingExtent(layers, extent);
 
   // adding clint features
@@ -346,8 +320,7 @@ function createBufferedFeature(geometry, radius) {
 
   // Uncomment this to draw the geometry for debugging puposes.
   const f = bufferedOLFeature.clone();
-  f.setStyle(testStyle);
-  resultsSource.addFeature(f);
+  debugLayer.addFeature(f);
 
   return bufferedOLFeature;
 }
@@ -382,13 +355,13 @@ function getFeaturesFromWfsServer(layer, extent) {
   return new Promise(function (resolve, reject) {
     const req = wfs.request(layer, extent);
     req
-    .then(data => {
-      const selectedRemoteItems = data.map(feature => {
-        return new SelectedItem(feature, layer);
-      });
-      resolve(selectedRemoteItems);
-    })
-    .catch(err => console.error(err));
+      .then(data => {
+        const selectedRemoteItems = data.map(feature => {
+          return new SelectedItem(feature, layer);
+        });
+        resolve(selectedRemoteItems);
+      })
+      .catch(err => console.error(err));
   });
 }
 
@@ -398,7 +371,6 @@ function getItemsIntersectingGeometry(items, geometry) {
 
   const format = new GeoJSON();
   const projection = map.getView().getProjection();
-
   let turfGeometry;
 
   if (geometry.getType() === 'Circle') {
@@ -406,14 +378,12 @@ function getItemsIntersectingGeometry(items, geometry) {
     const polygon = fromCircle(geometry);
     polygon.transform(projection, 'EPSG:4326');
     turfGeometry = format.writeGeometryObject(polygon);
-
   } else {
     geometry.transform(projection, 'EPSG:4326');
     turfGeometry = format.writeGeometryObject(geometry);
   }
 
   const intersectingItems = [];
-
   items.forEach(item => {
     const feature = item.getFeature();
     feature.getGeometry().transform(projection, 'EPSG:4326');
@@ -431,9 +401,7 @@ function getItemsIntersectingGeometry(items, geometry) {
   Uncomment this to draw the geometry for debugging puposes.
   const olFeature = format.readFeature(turfGeometry);
   olFeature.getGeometry().transform('EPSG:4326', projection);
-  olFeature.setStyle(testStyle);
-  resultsSource.addFeature(olFeature);
-  
+  debugLayer.addFeature(olFeature);
   console.log(features.length);
   console.log(intersectingFeatures.length);
 */
@@ -546,7 +514,6 @@ function createRadiusLengthTooltip() {
     stopEvent: false
   });
 
-  //overlayArray.push(radiusLengthTooltip);
   map.addOverlay(radiusLengthTooltip);
 }
 
@@ -718,63 +685,46 @@ function runpolyfill() {
 }
 
 function init(optOptions) {
-  // console.log(optOptions);
-  // const options = optOptions || {};
-  // const savedSelection = options.savedSelection || undefined;
-  // const savedPin = options.savedPin ? maputils.createPointFeature(options.savedPin, pinStyle) : undefined;
 
   runpolyfill();
-  defaultTool = 'click';
-  clickSelection = true, boxSelection = true, circleSelection = true, bufferSelection = true;
+  let tools = optOptions.hasOwnProperty('tools') ? optOptions.tools : ['click', 'box', 'circle', 'buffer'];
+  defaultTool = optOptions.hasOwnProperty('default') ? optOptions.default : 'click';
+  clickSelection = tools.find(i => i === 'click') ? true : false;
+  boxSelection = tools.find(i => i === 'box') ? true : false;
+  circleSelection = tools.find(i => i === 'circle') ? true : false;
+  bufferSelection = tools.find(i => i === 'buffer') ? true : false;
 
   map = viewer.getMap();
   // source object to hold drawn features that mark an area to select features from
+  // Draw Interaction does not need a layer, only a source is enough for it to work.  
   selectSource = new VectorSource();
-  // source object to hold selected features
-  // resultsSource = new VectorSource();
-  resultsSource = selectionLayer.getFeatureStore();
 
-  /*
-  // Drawn features for selection, 
-  // Draw Interaction does not need a layer, only a source is enough for it to work.
-  selectVector = new VectorLayer({
-    source: selectSource,
-    name: 'multiselect',
-    visible: true,
-    zIndex: 6
-  });
-
-  selectVector.setStyle(new Style({
-    stroke: new Stroke({
-      color: 'red',
-      width: 3
+  const debugStyle = [
+    /* We are using two different styles:
+     *  - The first style is for line & polygons geometries.
+     *  - The second style is for point geometries.
+     */
+    new Style({
+      stroke: new Stroke({
+        color: 'rgba(255, 0, 0, 0.5)',
+        width: 1
+      }),
+      fill: new Fill({
+        color: 'rgba(0, 0, 255, 0)'
+      })
     }),
-    fill: new Fill({
-      color: 'rgba(0, 0, 255, 0.1)'
+    new Style({
+      image: new CircleStyle({
+        radius: 5,
+        fill: new Fill({
+          color: 'red'
+        })
+      })
     })
-  }));
-  */
+  ];
 
-  testStyle = new Style({
-    stroke: new Stroke({
-      color: 'rgba(255, 0, 0, 0.5)',
-      width: 1
-    }),
-    fill: new Fill({
-      color: 'rgba(0, 0, 255, 0)'
-    })
-  });
-
-  resultsVector = selectionLayer.getFeatureLayer();
-  /*  resultsVector = new VectorLayer({
-     source: resultsSource,
-     name: 'multiselect',
-     visible: true,
-     zIndex: 6
-   }); */
-
-  // map.addLayer(selectVector);
-  // map.addLayer(resultsVector);
+  debugLayer = featurelayer(null, map);
+  debugLayer.setStyle(debugStyle);
 
   $('.o-map').on('enableInteraction', onEnableInteraction);
   render();

@@ -1,4 +1,3 @@
-import $ from 'jquery';
 import selectionManager from './selectionmanager';
 
 let urvalContainer;
@@ -24,16 +23,13 @@ function render() {
     closeButtonSvg.addEventListener('click', (e) => selectionManager.clearSelection());
     urvalContainer.appendChild(closeButtonSvg);
 
-
     listContainer = document.createElement('div');
     listContainer.classList.add('listcontainer');
 
     const exportContainer = document.createElement('div');
     exportContainer.classList.add('exportcontainer');
-    // const svg = createSvgElement('fa-file-export', 'export-svg');
     const svg = createSvgElement('fa-caret-square-o-right', 'export-svg');
     exportContainer.appendChild(svg);
-
     const exportTextNodeContainer = document.createElement('div');
     exportTextNodeContainer.classList.add('export-textnode-container');
     const exportTextNode = document.createTextNode('Exportera urvalet');
@@ -43,13 +39,11 @@ function render() {
         console.log('Exportera Urval');
     });
 
-
     mainContainer.appendChild(urvalContainer);
     mainContainer.appendChild(listContainer);
     mainContainer.appendChild(exportContainer);
     const parentElement = document.getElementById('o-map');
     parentElement.appendChild(mainContainer);
-
     mainContainer.classList.add('hidden');
 }
 
@@ -57,17 +51,13 @@ function createUrvalElement(layerName, layerTitle) {
 
     const urvalElement = document.createElement('div');
     urvalElement.classList.add('urvalelement');
-
     const textNode = document.createTextNode(layerTitle);
     urvalElement.appendChild(textNode);
-
     urvalContainer.appendChild(urvalElement);
     urvalElements.set(layerName, urvalElement);
-
     urvalElement.addEventListener('click', (e) => {
         showSelectedList(layerName);
     });
-
     const sublistContainter = document.createElement('div');
     sublists.set(layerName, sublistContainter);
 }
@@ -90,44 +80,29 @@ function showSelectedList(layerName) {
 }
 
 function createListElement(item) {
-    console.log('creating list item ' + item.getId());
 
     const listElement = document.createElement('div');
     listElement.classList.add('listelement');
     listElement.id = item.getId();
-
     const svg = createSvgElement('fa-times-circle', 'removelistelement-svg');
-
     svg.addEventListener('click', (e) => {
-        console.log('removing element');
-        // const sublist = sublists.get(item.getLayer().get('name'));
-        // sublist.removeChild(listElement);
-
-        // selectionManager.removeItemById();
         selectionManager.removeItem(item);
     });
-
     listElement.appendChild(svg);
-
     const listElementContentContainer = document.createElement('div');
     listElementContentContainer.classList.add('listelement-content-container');
-    // const textNode = document.createTextNode(item.getId());
     const content = createElementFromHTML(item.getContent()); // Content that is created in getattribute module is a template is supposed to be used with jQuery. without jQuery we cannot append it before it is converted to a proper html element.
     listElementContentContainer.appendChild(content);
     listElement.appendChild(listElementContentContainer);
-
     createExpandableContent(listElementContentContainer, content, item.getId());
-
     const sublist = sublists.get(item.getLayer().get('name'));
     sublist.appendChild(listElement);
-
     showUrvalElement(item.getLayer().get('name'));
 }
 
 function createElementFromHTML(htmlString) {
     var div = document.createElement('div');
     div.innerHTML = htmlString.trim();
-
     // Change this to div.childNodes to support multiple top-level nodes
     return div.firstChild;
 }
@@ -137,7 +112,6 @@ function createExpandableContent(listElementContentContainer, content, elementId
     const items = content.querySelectorAll('ul > li');
 
     if (items.length > 2) {
-
         const rightArrowSvg = createSvgElement('fa-chevron-right', 'expandlistelement-svg');
 
         listElementContentContainer.appendChild(rightArrowSvg);
@@ -162,7 +136,6 @@ function createExpandableContent(listElementContentContainer, content, elementId
                     item.classList.add('folded');
                     item.classList.remove('unfolded');
                 });
-
             } else {
                 rightArrowSvg.classList.add('rotated');
                 listElementContentContainer.setAttribute('expanded', 'true');
@@ -192,7 +165,6 @@ function createExpandableContent(listElementContentContainer, content, elementId
     } else {
 
         listElementContentContainer.addEventListener('click', (e) => {
-
             if (e.target.tagName.toUpperCase() === "A") return;
             selectionManager.highlightFeatureById(elementId);
             highlightListElement(elementId);
@@ -245,27 +217,18 @@ function scrollListElementToView(featureId) {
         for (let index = 0; index < elements.length; index++) {
             const element = elements[index];
             if (element.id === featureId) {
+                // time out is set so that element gets the time to expand first, otherwise it will be scrolled halfway to the view
                 setTimeout(() => {
-                    
                     const elementBoundingBox = element.getBoundingClientRect(); 
-                    console.log(elementBoundingBox);
                     const listContainer = document.getElementsByClassName('listcontainer')[0];
                     const listContainerBoundingBox = listContainer.getBoundingClientRect();
-                    console.log(listContainerBoundingBox);
                     if (elementBoundingBox.top < listContainerBoundingBox.top) {
-                        // console.log(element.scrollTop);
-                        // console.log(listContainer.scrollTop );
                         const scrollDownValue = listContainerBoundingBox.top - elementBoundingBox.top;
                         listContainer.scrollTop = listContainer.scrollTop - scrollDownValue;
                     } else if (elementBoundingBox.bottom > listContainerBoundingBox.bottom) {
-                        console.log(element.scrollTop);
-                        console.log(listContainer.scrollTop );
-                        
                         const scrollUpValue = elementBoundingBox.bottom - listContainerBoundingBox.bottom;
-                        console.log(scrollUpValue);
                         listContainer.scrollTop = listContainer.scrollTop + scrollUpValue;
                     }
-                    
                 }, 500);
             }
         }
@@ -279,18 +242,18 @@ function showUrvalElement(layerName) {
 
 function removeListElement(item) {
     const sublist = sublists.get(item.getLayer().get('name'));
-
-    // This loop is needed because when clear() is called it will try to remove ALL elements, but elements 
-    // for not-selected list are already removed, thus the element found by id becomes null if document.getElementById was used.
-    // Also when removing an item by ctrl + click, the item might not be in the active list, but still nerds to be removed.
-    // obs! getElementById works only on document and not on the element.
+    /*  
+    This loop is needed because when clear() is called it will try to remove ALL elements, but elements 
+    for not-selected list are already removed, thus the element found by id becomes null if document.getElementById was used.
+    Also when removing an item by ctrl + click, the item might not be in the active list, but still nerds to be removed.
+    OBS! getElementById works only on document and not on the element.
+    */
     let listElement;
     for (let i = 0; i < sublist.children.length; i++) {
         if (sublist.children[i].id === item.getId()) {
             listElement = sublist.children[i];
         }
     }
-
     if (listElement)
         sublist.removeChild(listElement);
 }
@@ -321,20 +284,14 @@ function updateUrvalElementText(layerName, layerTitle, sum) {
 }
 
 function hideInfowindow() {
-    // const infowindow = document.getElementsByClassName('sidebarcontainer');
-    // infowindow[0].classList.add('hidden');
     mainContainer.classList.add('hidden');
 }
 
 function showInfowindow() {
-    // const infowindow = document.getElementsByClassName('sidebarcontainer');
-    // infowindow[0].classList.remove('hidden');
     mainContainer.classList.remove('hidden');
 }
 
 function init() {
-
-    // runPollyfill();
     sublists = new Map();
     urvalElements = new Map();
     expandableContents = new Map();

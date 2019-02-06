@@ -15,7 +15,7 @@ import selectionmanager from './selectionmanager';
 const style = Style();
 const styleTypes = StyleTypes();
 
-export let selectionLayer;
+let selectionLayer;
 let savedPin;
 let clickEvent;
 let options;
@@ -33,6 +33,7 @@ let popup;
 
 function clear() {
   selectionLayer.clear();
+  selectionmanager.clearSelection();
   sidebar.setVisibility(false);
   if (overlay) {
     viewer.removeOverlays(overlay);
@@ -160,10 +161,9 @@ function identify(identifyItems, target, coordinate) {
         initCarousel('#o-identify-carousel');
         break;
       }
-    case 'infowindow': 
+    case 'infowindow':
       {
         console.log('info window');
-        selectionmanager.clearSelection();
         if (items.length === 1) {
           selectionmanager.addOrHighlightItem(items[0]);
         } else if (items.length > 1) {
@@ -190,9 +190,9 @@ function onClick(evt) {
         const serverResult = data || [];
         const result = serverResult.concat(clientResult);
         if (result.length > 0) {
-          selectionLayer.clear();
           identify(result, identifyTarget, evt.coordinate);
-        } else if (selectionLayer.getFeatures().length > 0) {
+        } else if (selectionLayer.getFeatures().length > 0 || (identifyTarget === 'infowindow' && selectionmanager.getNumberOfSelectedItems() > 0)) {
+          console.log('clear');
           clear();
         } else if (pinning) {
           const resolution = map.getView().getResolution();
@@ -235,6 +235,8 @@ function init(optOptions) {
   pinStyle = style.createStyleRule(pinStyleOptions)[0];
   savedPin = options.savedPin ? maputils.createPointFeature(options.savedPin, pinStyle) : undefined;
   selectionStyles = 'selectionStyles' in options ? style.createGeometryStyle(options.selectionStyles) : style.createEditStyle();
+  console.log(selectionStyles);
+  
   const savedFeature = savedPin || savedSelection || undefined;
   selectionLayer = featurelayer(savedFeature, map);
   const infowindow = Object.prototype.hasOwnProperty.call(options, 'infowindow') ? options.infowindow : 'overlay';

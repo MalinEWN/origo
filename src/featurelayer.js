@@ -1,64 +1,9 @@
 import VectorSource from 'ol/source/Vector';
 import VectorLayer from 'ol/layer/Vector';
-import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style.js';
 
 // create unmanaged layer
 export default function (features, map) {
   let sourceLayer;
-  const styles = [
-    /* We are using two different styles:
-     *  - The first style is for polygons geometries.
-     *  - The second style is for point geometries.
-     */
-    new Style({
-      stroke: new Stroke({
-        color: 'blue',
-        width: 3
-      }),
-      fill: new Fill({
-        color: 'rgba(0, 0, 255, 0.1)'
-      })
-    }),
-    new Style({
-      image: new CircleStyle({
-        radius: 5,
-        fill: new Fill({
-          color: 'red'
-        })
-      })
-    })
-  ];
-
-  const highlightStyles = [
-    /* We are using two different styles:
-     *  - The first style is for polygons geometries.
-     *  - The second style is for point geometries.
-     */
-    new Style({
-      stroke: new Stroke({
-        color: 'green',
-        width: 3
-      }),
-      fill: new Fill({
-        color: 'rgba(0, 255, 0, 0.1)'
-      })
-    }),
-    new Style({
-      image: new CircleStyle({
-        radius: 5,
-        fill: new Fill({
-          color: 'green'
-        })
-      })
-    })
-  ];
-
-  function featureStyler(feature) {
-    if (feature.get('state') === 'selected') {
-      return highlightStyles;
-    } else
-      return styles;
-  }
 
   const collection = features ? [features] : [];
   const featureLayerStore = new VectorSource({
@@ -66,8 +11,7 @@ export default function (features, map) {
   });
   const featureLayer = new VectorLayer({
     source: featureLayerStore,
-    map,
-    style: featureStyler
+    map
   });
 
   return {
@@ -102,6 +46,9 @@ export default function (features, map) {
     },
     refresh: function refresh() {
       featureLayerStore.refresh();
+    },
+    setStyle: function setStyle(style) {
+      featureLayer.setStyle(style);
     }
   };
 }
