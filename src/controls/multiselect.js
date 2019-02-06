@@ -261,7 +261,11 @@ function createRadiusModal() {
     // console.log(onlyNumbers);
     const radius = parseFloat(radiusVal);
 
-    if ((!radius && radius !== 0) || (radius <= 0 && bufferFeature.getGeometry().getType() === GeometryType.POINT)) {
+    if ((!radius && radius !== 0) || 
+        (radius <= 0 && (bufferFeature.getGeometry().getType() === GeometryType.POINT ||
+                         bufferFeature.getGeometry().getType() === GeometryType.MULTI_POINT ||
+                         bufferFeature.getGeometry().getType() === GeometryType.MULTI_LINE_STRING ||
+                         bufferFeature.getGeometry().getType() === GeometryType.LINE_STRING))) {
       $('#bufferradius').addClass('unvalidValue');
       e.stopPropagation();
       return;

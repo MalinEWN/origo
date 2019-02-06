@@ -163,7 +163,6 @@ function identify(identifyItems, target, coordinate) {
       }
     case 'infowindow':
       {
-        console.log('info window');
         if (items.length === 1) {
           selectionmanager.addOrHighlightItem(items[0]);
         } else if (items.length > 1) {
@@ -192,7 +191,6 @@ function onClick(evt) {
         if (result.length > 0) {
           identify(result, identifyTarget, evt.coordinate);
         } else if (selectionLayer.getFeatures().length > 0 || (identifyTarget === 'infowindow' && selectionmanager.getNumberOfSelectedItems() > 0)) {
-          console.log('clear');
           clear();
         } else if (pinning) {
           const resolution = map.getView().getResolution();
@@ -235,8 +233,7 @@ function init(optOptions) {
   pinStyle = style.createStyleRule(pinStyleOptions)[0];
   savedPin = options.savedPin ? maputils.createPointFeature(options.savedPin, pinStyle) : undefined;
   selectionStyles = 'selectionStyles' in options ? style.createGeometryStyle(options.selectionStyles) : style.createEditStyle();
-  console.log(selectionStyles);
-  
+    
   const savedFeature = savedPin || savedSelection || undefined;
   selectionLayer = featurelayer(savedFeature, map);
   const infowindow = Object.prototype.hasOwnProperty.call(options, 'infowindow') ? options.infowindow : 'overlay';
