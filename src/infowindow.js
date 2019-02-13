@@ -1,3 +1,4 @@
+import $ from 'jquery';
 import selectionManager from './selectionmanager';
 
 let urvalContainer;
