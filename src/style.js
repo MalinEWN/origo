@@ -20,43 +20,47 @@ const width = 3;
 
 // default edit style options
 const editStyleOptions = {
-  Point: [{
-    circle: {
-      radius: 1,
-      stroke: {
-        color: blue,
-        width: 0
-      },
-      fill: {
-        color: blue
+  Point: [
+    {
+      circle: {
+        radius: 1,
+        stroke: {
+          color: blue,
+          width: 0
+        },
+        fill: {
+          color: blue
+        }
       }
     }
-  }],
-  LineString: [{
-    stroke: {
-      color: white,
-      width: width + 2
-    }
-  },
-  {
-    stroke: {
-      color: blue,
-      width
-    }
-  }
   ],
-  Polygon: [{
-    stroke: {
-      color: white,
-      width: width + 2
+  LineString: [
+    {
+      stroke: {
+        color: white,
+        width: width + 2
+      }
+    },
+    {
+      stroke: {
+        color: blue,
+        width
+      }
     }
-  },
-  {
-    stroke: {
-      color: blue,
-      width
+  ],
+  Polygon: [
+    {
+      stroke: {
+        color: white,
+        width: width + 2
+      }
+    },
+    {
+      stroke: {
+        color: blue,
+        width
+      }
     }
-  }
   ]
 };
 
@@ -77,9 +81,9 @@ function createStyleOptions(styleParams) {
         };
         break;
       default:
-      {
-        break;
-      }
+        {
+          break;
+        }
     }
   }
   if (Object.prototype.hasOwnProperty.call(styleParams, 'zIndex')) {

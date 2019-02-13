@@ -7,6 +7,9 @@ const lightgreen = [46, 184, 46, 0.1];
 const red = [255, 51, 51, 1];
 const lightred = [255, 51, 51, 0.1];
 
+const white = [255, 255, 255, 1];
+const mediumblue = [0, 153, 255, 0.25];
+
 const width = 3;
 
 const selection = {
@@ -32,19 +35,34 @@ const selection = {
 
   highlighted: [{
     fill: {
-      color: lightred
+      color: mediumblue
     },
     stroke: {
-      color: red,
-      width: width
+      color: white,
+      width: width + 3
     },
     circle: {
       radius: 5,
       stroke: {
-        color: red
+        color: blue
       },
       fill: {
-        color: red
+        color: blue
+      }
+    }
+  },
+  {
+    stroke: {
+      color: blue,
+      width: width + 1
+    },
+    circle: {
+      radius: 10,
+      stroke: {
+        color: blue
+      },
+      fill: {
+        color: lightblue
       }
     }
   }]

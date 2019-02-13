@@ -20,7 +20,12 @@ function render() {
     urvalTextNodeContainer.appendChild(urvalTextNode);
     urvalContainer.appendChild(urvalTextNodeContainer);
     const closeButtonSvg = createSvgElement('fa-window-close', 'closebutton-svg');
-    closeButtonSvg.addEventListener('click', (e) => selectionManager.clearSelection());
+    closeButtonSvg.addEventListener('click', (e) => {
+        $('.o-map').trigger({
+            type: 'enableInteraction',
+            interaction: 'featureInfo'
+        });
+    });
     urvalContainer.appendChild(closeButtonSvg);
 
     listContainer = document.createElement('div');
@@ -219,7 +224,7 @@ function scrollListElementToView(featureId) {
             if (element.id === featureId) {
                 // time out is set so that element gets the time to expand first, otherwise it will be scrolled halfway to the view
                 setTimeout(() => {
-                    const elementBoundingBox = element.getBoundingClientRect(); 
+                    const elementBoundingBox = element.getBoundingClientRect();
                     const listContainer = document.getElementsByClassName('listcontainer')[0];
                     const listContainerBoundingBox = listContainer.getBoundingClientRect();
                     if (elementBoundingBox.top < listContainerBoundingBox.top) {

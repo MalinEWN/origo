@@ -232,8 +232,7 @@ function init(optOptions) {
   pinning = Object.prototype.hasOwnProperty.call(options, 'pinning') ? options.pinning : true;
   pinStyle = style.createStyleRule(pinStyleOptions)[0];
   savedPin = options.savedPin ? maputils.createPointFeature(options.savedPin, pinStyle) : undefined;
-  selectionStyles = 'selectionStyles' in options ? style.createGeometryStyle(options.selectionStyles) : style.createEditStyle();
-    
+  selectionStyles = 'selectionStyles' in options ? style.createGeometryStyle(options.selectionStyles) : style.createEditStyle();  
   const savedFeature = savedPin || savedSelection || undefined;
   selectionLayer = featurelayer(savedFeature, map);
   const infowindow = Object.prototype.hasOwnProperty.call(options, 'infowindow') ? options.infowindow : 'overlay';
