@@ -34,6 +34,7 @@ const selection = {
   }],
 
   highlighted: [{
+    zIndex: 1,
     fill: {
       color: mediumblue
     },
@@ -52,6 +53,7 @@ const selection = {
     }
   },
   {
+    zIndex: 2,
     stroke: {
       color: blue,
       width: width + 1
