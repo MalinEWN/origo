@@ -1,18 +1,19 @@
 import $ from 'jquery';
 import selectionManager from './selectionmanager';
+import viewer from './viewer';
 
+let mainContainer;
 let urvalContainer;
 let listContainer;
 let sublists;
 let urvalElements;
 let expandableContents;
-let mainContainer;
+let exportOptions;
+let activeLayer;
 
 function render() {
-
     mainContainer = document.createElement('div');
     mainContainer.classList.add('sidebarcontainer');
-
     urvalContainer = document.createElement('div');
     urvalContainer.classList.add('urvalcontainer');
     const urvalTextNodeContainer = document.createElement('div');
@@ -28,10 +29,8 @@ function render() {
         });
     });
     urvalContainer.appendChild(closeButtonSvg);
-
     listContainer = document.createElement('div');
     listContainer.classList.add('listcontainer');
-
     const exportContainer = document.createElement('div');
     exportContainer.classList.add('exportcontainer');
     const svg = createSvgElement('fa-caret-square-o-right', 'export-svg');
@@ -42,15 +41,69 @@ function render() {
     exportTextNodeContainer.appendChild(exportTextNode);
     exportContainer.appendChild(exportTextNodeContainer);
     exportTextNodeContainer.addEventListener('click', (e) => {
-        console.log('Exportera Urval');
+        handleExport();
     });
-
     mainContainer.appendChild(urvalContainer);
     mainContainer.appendChild(listContainer);
     mainContainer.appendChild(exportContainer);
     const parentElement = document.getElementById('o-map');
     parentElement.appendChild(mainContainer);
     mainContainer.classList.add('hidden');
+}
+
+function handleExport() {
+
+    let layerSpecificExportOptions;
+    let simpleExport = exportOptions.enableSimpleExport ? exportOptions.enableSimpleExport : false;
+    let simpleExportUrl = exportOptions.simpleExportUrl;
+
+    if (exportOptions.layerSpecificExport) {
+        layerSpecificExportOptions = exportOptions.layerSpecificExport.find(i => i.layer === activeLayer);
+    }
+    console.log(layerSpecificExportOptions);
+    if (layerSpecificExportOptions) {
+        console.log('spesific Exporting layer ' + activeLayer);
+
+    } else if (simpleExport) {
+        if (!simpleExportUrl) {
+            alert('Export URL is not specified.');
+            return;
+        }
+        console.log('simple Exporting layer ' + activeLayer);
+        const items = selectionManager.getSelectedItemsForALayer(activeLayer);
+        const layer = viewer.getLayer(activeLayer);
+        const layerAttributes = layer.get('attributes');
+        const features = items.map(i => i.getFeature());
+        const data = features.map(f => {
+            const obj = f.getProperties();
+            console.log(Object.keys(obj));
+            
+            delete obj.geom;
+            return obj;
+        });
+        
+        console.log(data);
+        console.log(layerAttributes);
+        
+        fetch(simpleExportUrl, {
+            method: 'POST', // or 'PUT'
+            body: JSON.stringify(data), // data can be `string` or {object}!
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+            })
+            .catch(err => console.log(err));
+
+    } else {
+        console.log('layer ' + activeLayer + ' cannot be exported!');
+
+    }
+
+
 }
 
 function createUrvalElement(layerName, layerTitle) {
@@ -69,6 +122,8 @@ function createUrvalElement(layerName, layerTitle) {
 }
 
 function showSelectedList(layerName) {
+
+    activeLayer = layerName;
     while (listContainer.firstChild) {
         listContainer.removeChild(listContainer.firstChild);
     }
@@ -297,7 +352,10 @@ function showInfowindow() {
     mainContainer.classList.remove('hidden');
 }
 
-function init() {
+function init(options) {
+
+    exportOptions = options.export || {};
+
     sublists = new Map();
     urvalElements = new Map();
     expandableContents = new Map();

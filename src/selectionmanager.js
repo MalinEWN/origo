@@ -1,4 +1,3 @@
-
 import infowindowManager from './infowindow';
 import Collection from 'ol/Collection';
 import viewer from './viewer';
@@ -57,6 +56,11 @@ function addOrHighlightItem(item) {
       highlightAndExpandItem(item);
     }
   }
+}
+
+function getSelectedItemsForALayer(layerName) {
+  const items = selectedItems.getArray().filter(i => i.getLayer().get('name') === layerName);
+  return items;
 }
 
 function removeItem(item) {
@@ -213,12 +217,13 @@ function runPolyfill() {
 }
 
 function init(options) {
+
   runPolyfill();
   map = viewer.getMap();
   selectedItems = new Collection([], { unique: true });
   urval = new Map();
   isInfowindow = Object.prototype.hasOwnProperty.call(options, 'infowindow') ? options.infowindow === 'infowindow' : false;
-  infowindow = infowindowManager.init();
+  infowindow = infowindowManager.init(options.infowindowOptions ? options.infowindowOptions : {});
   selectedItems.on('add', onItemAdded);
   selectedItems.on('remove', onItemRemoved);
 }
@@ -233,5 +238,6 @@ export default {
   clearSelection,
   highlightFeature,
   highlightFeatureById,
-  getNumberOfSelectedItems
+  getNumberOfSelectedItems,
+  getSelectedItemsForALayer
 }
