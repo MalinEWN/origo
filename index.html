@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="sv">
+
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -7,13 +8,23 @@
 	<title>Origo exempel</title>
 	<link href="css/style.css" rel="stylesheet">
 </head>
+
 <body>
-<div id="app-wrapper">
-</div>
-<script src="js/origo.js"></script>
-<script type="text/javascript">
-	//Init origo
+	<div id="app-wrapper">
+	</div>
+	<script src="js/origo.js"></script>
+	<script src="/plugins/draw.js"></script>
+
+	<script type="text/javascript">
+		//Init origo
 		var origo = Origo('index.json');
-</script>
+		
+		origo.on('load', function (viewer) {
+			console.log('origo loaded!');
+			Draw();
+		});
+
+	</script>
 </body>
+
 </html>
