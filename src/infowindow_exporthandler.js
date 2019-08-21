@@ -86,32 +86,38 @@ export function layerSpecificExportHandler(url, activeLayer, selectedItems, attr
         }
     })
         .then(response => {
+            if (response.status !== 200) { // fmeserver  response status check!
+				throw "fmeserver failed"
+            }
             const contentType = response.headers.get('content-type');
             switch (contentType) {
-                case 'application/json':
-                    return response.json();
-
-                // case 'application/vnd.ms-excel':
-
-                //     if (response.status !== 200) {
-                //         throw response.statusText;
-                //         // return Promise.reject(response.statusText);
-                //     }
-
-                //     response.blob().then(blob => {
-                //         download(blob, 'ExportedFeatures.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-                //     });
-                //     break;
-
-                default:
-                    //test
-                    if (response.status !== 200) {
-                        throw response.statusText;
-                        // return Promise.reject(response.statusText);
-                    }
-
-                    response.blob().then(blob => {
+                
+				case 'application/json;charset=UTF-8':
+					response.json()
+					.then(json => {
+						let urlZip = json.serviceResponse.url.replace("http://si-sbkgeoapp01:8080", "https://gisapp.sigtuna.se");
+						download(urlZip);
+					});
+                    break;
+				
+				case 'application/vnd.ms-excel':
+                    response.blob()
+					.then(blob => {
                         download(blob, 'data_siggis.xlsx', contentType);
+                    });
+                    break;
+					
+				case 'application/octet-stream':
+                    response.blob()
+					.then(blob => {
+                        download(blob, 'data_siggis.docx', contentType);
+                    });
+                    break;
+				
+				case 'application/pdf':
+                    response.blob()
+					.then(blob => {
+                        download(blob, 'data_siggis.pdf', contentType);
                     });
                     break;
             }
